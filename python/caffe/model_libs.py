@@ -867,7 +867,75 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
         if not share_location:
             num_loc_output *= num_classes
         ConvBNLayer(net, from_layer, name, use_bn=use_batchnorm, use_relu=False, lr_mult=lr_mult,
-            num_output=num_loc_output, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+            num_output=num_loc_output , kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+        
+        #changed by veveve
+
+        if i < 5:
+          ConvBNLayer(net, from_layer, name, use_bn=use_batchnorm, use_relu=False, lr_mult=lr_mult,
+            num_output=num_loc_output *16, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+
+          inceptions = []
+
+          inception_kwargs = {
+              'param': [dict(lr_mult=1, decay_mult=1), dict(lr_mult=2, decay_mult=0)],
+              'weight_filler': dict(type='xavier'),
+              'bias_filler': dict(type='constant', value=0)}
+
+          inception_a_1_name = "{}_inception_a_1".format(name)
+          inception_a_1_name_relu = "{}_relu".format(inception_a_1_name)
+          net[inception_a_1_name] = L.Convolution(net[name],num_output = 64,kernel_size = 1,pad = 0,stride = 1,**inception_kwargs)
+          net[inception_a_1_name_relu] = L.ReLU(net[inception_a_1_name])
+          inceptions.append(net[inception_a_1_name_relu])
+
+          inception_b_1_name = "{}_inception_b_1".format(name)
+          inception_b_1_name_relu = "{}_relu".format(inception_b_1_name)
+          net[inception_b_1_name] = L.Convolution(net[name],num_output = 96,kernel_size = 1,pad = 0,stride = 1,**inception_kwargs)
+          net[inception_b_1_name_relu] = L.ReLU(net[inception_b_1_name],in_place = True)
+
+          inception_b_2_name = "{}_inception_b_2".format(name)
+          inception_b_2_name_relu = "{}_relu".format(inception_b_2_name)
+          net[inception_b_2_name] = L.Convolution(net[inception_b_1_name_relu],num_output = 128,kernel_size = 3,pad = 1,stride = 1,**inception_kwargs)
+          net[inception_b_2_name_relu] = L.ReLU(net[inception_b_2_name],in_place = True)
+          inceptions.append(net[inception_b_2_name_relu])
+
+          inception_c_1_name = "{}_inception_c_1".format(name)
+          inception_c_1_name_relu = "{}_relu".format(inception_c_1_name)
+          net[inception_c_1_name] = L.Convolution(net[name],num_output = 16,kernel_size = 1,pad = 0,stride = 1,**inception_kwargs)
+          net[inception_c_1_name_relu] = L.ReLU(net[inception_c_1_name],in_place = True)
+          
+          inception_c_2_name = "{}_inception_c_2".format(name)
+          inception_c_2_name_relu = "{}_relu".format(inception_c_2_name)
+          net[inception_c_2_name] = L.Convolution(net[inception_c_1_name],num_output = 32,kernel_size = 5,pad = 2,stride = 1,**inception_kwargs)
+          net[inception_c_2_name_relu] = L.ReLU(net[inception_c_2_name],in_place = True)
+
+          inceptions.append(net[inception_c_2_name_relu])  
+
+          inception_d_1_name = "{}_inception_d_1".format(name)
+          inception_d_1_name_relu = "{}_relu".format(inception_d_1_name)
+          net[inception_d_1_name] = L.Pooling(net[name], pool=P.Pooling.MAX, pad=1, kernel_size=3, stride=1)
+          
+          inception_d_2_name = "{}_inception_d_2".format(name)
+          inception_d_2_name_relu = "{}_relu".format(inception_d_2_name)
+          net[inception_d_2_name] = L.Convolution(net[inception_d_1_name],num_output = 32,kernel_size = 1,pad = 0,stride = 1,**inception_kwargs)
+          net[inception_d_2_name_relu] = L.ReLU(net[inception_d_2_name],in_place = False)
+          inceptions.append(net[inception_d_2_name_relu])
+
+          inception_concat_name = "{}_inc_conc".format(name)
+          
+          net[inception_concat_name] = L.Concat(*inceptions,axis=1)
+
+          inception_out = "{}_inc_output".format(name)
+
+          net[inception_out] = L.Convolution(net[inception_concat_name],num_output = num_loc_output,kernel_size = 1,pad=0,stride=1,**inception_kwargs)
+          
+          name = inception_out
+
+        else:
+          ConvBNLayer(net, from_layer, name, use_bn=use_batchnorm, use_relu=False, lr_mult=lr_mult,
+            num_output=num_loc_output , kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+        #end changed by  veveveve
+
         permute_name = "{}_perm".format(name)
         net[permute_name] = L.Permute(net[name], order=[0, 2, 3, 1])
         flatten_name = "{}_flat".format(name)
