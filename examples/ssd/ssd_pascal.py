@@ -201,6 +201,7 @@ train_transform_param = {
                 'saturation_upper': 1.5,
                 'random_order_prob': 0.0,
                 },
+        # This param related with the size of expand image
         'expand_param': {
                 'prob': 0.5,
                 'max_expand_ratio': 4.0,
@@ -427,6 +428,7 @@ make_if_not_exist(job_dir)
 make_if_not_exist(snapshot_dir)
 
 # Create train net.
+# NOTE: Where the data from
 net = caffe.NetSpec()
 net.data, net.label = CreateAnnotatedDataLayer(train_data, batch_size=batch_size_per_device,
         train=True, output_label=True, label_map_file=label_map_file,
