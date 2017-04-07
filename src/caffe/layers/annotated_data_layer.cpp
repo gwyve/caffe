@@ -157,9 +157,11 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
       this->data_transformer_->DistortImage(anno_datum.datum(),
                                             distort_datum.mutable_datum());
       if (transform_param.has_expand_param()) {
+        // 对图片进行数量拓展，其中实现了对annotation的转化等等操作
         expand_datum = new AnnotatedDatum();
         this->data_transformer_->ExpandImage(distort_datum, expand_datum);
       } else {
+        // 对图片进行扭曲变形
         expand_datum = &distort_datum;
       }
     } else {
@@ -175,6 +177,8 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     if (batch_samplers_.size() > 0) {
       // Generate sampled bboxes from expand_datum.
       vector<NormalizedBBox> sampled_bboxes;
+      //进入关键函数
+      // 
       GenerateBatchSamples(*expand_datum, batch_samplers_, &sampled_bboxes);
       if (sampled_bboxes.size() > 0) {
         // Randomly pick a sampled bbox and crop the expand_datum.

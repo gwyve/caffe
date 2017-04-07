@@ -122,7 +122,8 @@ void GenerateSamples(const NormalizedBBox& source_bbox,
                      const BatchSampler& batch_sampler,
                      vector<NormalizedBBox>* sampled_bboxes) {
   int found = 0;
-  for (int i = 0; i < batch_sampler.max_trials(); ++i) {
+  for (int i = 0; i < batch_sampler.max_trials(); ++i) 
+  {
     if (batch_sampler.has_max_sample() &&
         found >= batch_sampler.max_sample()) {
       break;
@@ -141,11 +142,26 @@ void GenerateSamples(const NormalizedBBox& source_bbox,
   }
 }
 
+// // An extension of Datum which contains "rich" annotations.
+// message AnnotatedDatum {
+//   enum AnnotationType {
+//     BBOX = 0;
+//   }
+//   optional Datum datum = 1;
+//   // If there are "rich" annotations, specify the type of annotation.
+//   // Currently it only supports bounding box.
+//   // If there are no "rich" annotations, use label in datum instead.
+//   optional AnnotationType type = 2;
+//   // Each group contains annotation for a particular class.
+//   repeated AnnotationGroup annotation_group = 3;
+// }
+
 void GenerateBatchSamples(const AnnotatedDatum& anno_datum,
                           const vector<BatchSampler>& batch_samplers,
                           vector<NormalizedBBox>* sampled_bboxes) {
   sampled_bboxes->clear();
   vector<NormalizedBBox> object_bboxes;
+  //将所有的objectbox重新存储在object_bboxes
   GroupObjectBBoxes(anno_datum, &object_bboxes);
   for (int i = 0; i < batch_samplers.size(); ++i) {
     if (batch_samplers[i].use_original_image()) {
