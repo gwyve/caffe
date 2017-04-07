@@ -175,6 +175,43 @@ batch_sampler = [
         'max_sample': 1,
     },
 ]
+
+# // Message that stores parameters used to apply transformation
+# // to the data layer's data
+# message TransformationParameter {
+#   // For data pre-processing, we can do simple scaling and subtracting the
+#   // data mean, if provided. Note that the mean subtraction is always carried
+#   // out before scaling.
+#   optional float scale = 1 [default = 1];
+#   // Specify if we want to randomly mirror data.
+#   optional bool mirror = 2 [default = false];
+#   // Specify if we would like to randomly crop an image.
+#   optional uint32 crop_size = 3 [default = 0];
+#   optional uint32 crop_h = 11 [default = 0];
+#   optional uint32 crop_w = 12 [default = 0];
+
+#   // mean_file and mean_value cannot be specified at the same time
+#   optional string mean_file = 4;
+#   // if specified can be repeated once (would substract it from all the channels)
+#   // or can be repeated the same number of times as channels
+#   // (would subtract them from the corresponding channel)
+#   repeated float mean_value = 5;
+#   // Force the decoded image to have 3 color channels.
+#   optional bool force_color = 6 [default = false];
+#   // Force the decoded image to have 1 color channels.
+#   optional bool force_gray = 7 [default = false];
+#   // Resize policy
+#   optional ResizeParameter resize_param = 8;
+#   // Noise policy
+#   optional NoiseParameter noise_param = 9;
+#   // Distortion policy
+#   optional DistortionParameter distort_param = 13;
+#   // Expand policy
+#   optional ExpansionParameter expand_param = 14;
+#   // Constraint for emitting the annotation after transformation.
+#   optional EmitConstraint emit_constraint = 10;
+# }
+
 train_transform_param = {
     'mirror': True,
     'mean_value': [104, 117, 123],

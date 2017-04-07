@@ -228,6 +228,7 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
         }
         // Transform datum and annotation_group at the same time
         transformed_anno_vec.clear();
+        // 对sample后的数据进行转化
         this->data_transformer_->Transform(*sampled_datum,
                                            &(this->transformed_data_),
                                            &transformed_anno_vec);

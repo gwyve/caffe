@@ -124,6 +124,7 @@ void GenerateSamples(const NormalizedBBox& source_bbox,
   int found = 0;
   for (int i = 0; i < batch_sampler.max_trials(); ++i) 
   {
+    // 每次最多采样batch_sampler.max_sample()
     if (batch_sampler.has_max_sample() &&
         found >= batch_sampler.max_sample()) {
       break;
