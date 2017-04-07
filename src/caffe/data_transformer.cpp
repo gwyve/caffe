@@ -312,6 +312,7 @@ void DataTransformer<Dtype>::TransformAnnotation(
                                 param_.emit_constraint())) {
           continue;
         }
+        
         NormalizedBBox proj_bbox;
         if (ProjectBBox(crop_bbox, resize_bbox, &proj_bbox)) {
           has_valid_annotation = true;
