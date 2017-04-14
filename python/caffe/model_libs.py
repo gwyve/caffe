@@ -816,7 +816,7 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
     loc_layers = []
     conf_layers = []
     objectness_layers = []
-    for i in range(0, num):
+    for i in range(0, num)[::-1]:
         from_layer = from_layers[i]
 
         # Get the normalize value.
@@ -866,8 +866,94 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
         num_loc_output = num_priors_per_location * 4;
         if not share_location:
             num_loc_output *= num_classes
-        ConvBNLayer(net, from_layer, name, use_bn=use_batchnorm, use_relu=False, lr_mult=lr_mult,
+
+        
+        #changed by veveve
+
+        source_name = ""
+
+        if i < 5:
+          ConvBNLayer(net, from_layer, name, use_bn=use_batchnorm, use_relu=False, lr_mult=lr_mult,
             num_output=num_loc_output, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+
+          source_name = "{}_concat".format(name)
+          inceptions = []
+          inceptions.append(net[name])
+            
+          inception_kwargs = {
+              'param': [dict(lr_mult=1, decay_mult=1), dict(lr_mult=2, decay_mult=0)],
+              'weight_filler': dict(type='xavier'),
+              'bias_filler': dict(type='constant', value=0)}  
+            
+
+          after_name = "{}_mbox_loc_concat_inc_output".format(from_layers[i+1])
+          if i == 4:
+            after_name = "{}_mbox_loc".format(from_layers[i+1])
+
+          after_deconv = "{}_deconv".format(after_name)
+
+          print(str(i)+"sssssssss"+ after_name)
+
+          if i == 0:
+            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 256,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
+          elif i == 1:
+            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 256,kernel_size = 3,pad = 1,stride = 2,**inception_kwargs)
+          elif i == 2:
+            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 256,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
+          elif i == 3:
+            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 256,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
+          elif i == 4:
+            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 256,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
+          
+          batch_name = "{}_BN".format(after_deconv)
+
+          ConvBNLayer(net, after_deconv, batch_name, use_bn=True, use_relu=True,use_scale=True, lr_mult=lr_mult,
+            num_output=num_loc_output , kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+
+
+          inceptions.append(net[batch_name])
+
+          net[source_name] = L.Concat(*inceptions,axis=1)
+
+          name = source_name
+
+          inception_out = "{}_inc_output".format(name)
+
+          if i == 0:
+            InceptionResnetA(net,from_name=name,out_name=inception_out,num_output = 512,**inception_kwargs)
+          elif i == 1:
+            InceptionResnetA(net,from_name=name,out_name=inception_out,num_output = 1024,**inception_kwargs)
+          elif i == 2:
+            InceptionResnetB(net,from_name=name,out_name=inception_out,num_output = 512,**inception_kwargs)
+          elif i == 3:
+            InceptionResnetB(net,from_name=name,out_name=inception_out,num_output = 256,**inception_kwargs)
+          elif i == 4:
+            InceptionResnetC(net,from_name=name,out_name=inception_out,num_output = 256,**inception_kwargs)
+
+
+          inception_concat_conv = "{}_inc_output".format(inception_out)
+          net[inception_concat_conv] = L.Convolution(net[inception_out],num_output = num_loc_output,kernel_size = 1,pad=0,stride=1,**inception_kwargs)
+          
+          name = inception_out+"_locBN"
+          source_name = inception_concat_conv
+
+          ConvBNLayer(net, inception_out, name, use_bn=use_batchnorm, use_relu=False, lr_mult=lr_mult,
+            num_output=num_loc_output , kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+
+          print(str(i)+"xxxxxxxxxx"+name)
+
+
+        else:
+          
+
+
+          ConvBNLayer(net, from_layer, name, use_bn=use_batchnorm, use_relu=False, lr_mult=lr_mult,
+            num_output=num_loc_output , kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+
+          print(str(i)+"xxxxxxxxxx"+name)
+
+        #end changed by  veveveve
+
         permute_name = "{}_perm".format(name)
         net[permute_name] = L.Permute(net[name], order=[0, 2, 3, 1])
         flatten_name = "{}_flat".format(name)
@@ -877,8 +963,20 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
         # Create confidence prediction layer.
         name = "{}_mbox_conf{}".format(from_layer, conf_postfix)
         num_conf_output = num_priors_per_location * num_classes;
-        ConvBNLayer(net, from_layer, name, use_bn=use_batchnorm, use_relu=False, lr_mult=lr_mult,
+
+        # changed by veveve
+        if i < 5:        
+          ConvBNLayer(net, source_name, name, use_bn=use_batchnorm, use_relu=False, lr_mult=lr_mult,
             num_output=num_conf_output, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+
+        else:
+          ConvBNLayer(net, from_layer, name, use_bn=use_batchnorm, use_relu=False, lr_mult=lr_mult,
+            num_output=num_conf_output, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+
+
+
+        # end changed by veveve
+
         permute_name = "{}_perm".format(name)
         net[permute_name] = L.Permute(net[name], order=[0, 2, 3, 1])
         flatten_name = "{}_flat".format(name)
@@ -931,3 +1029,251 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
         mbox_layers.append(net[name])
 
     return mbox_layers
+
+def InceptionA(net,from_name,out_name,num_output,**kwargs):
+    inceptions = []
+
+    inception_a_1_name = "{}_inceptionA_a_1".format(from_name)
+    net[inception_a_1_name] = L.Convolution(net[from_name],num_output = 96,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+    inceptions.append(net[inception_a_1_name])
+
+    inception_b_1_name = "{}_inceptionA_b_1".format(from_name)
+    net[inception_b_1_name] = L.Convolution(net[from_name],num_output = 64,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+
+    inception_b_2_name = "{}_inceptionA_b_2".format(from_name)
+    net[inception_b_2_name] = L.Convolution(net[inception_b_1_name],num_output = 96,kernel_size = 3,pad = 1,stride = 1,**kwargs)
+    inceptions.append(net[inception_b_2_name])
+
+    inception_c_1_name = "{}_inceptionA_c_1".format(from_name)
+    net[inception_c_1_name] = L.Convolution(net[from_name],num_output = 64,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+
+    inception_c_2_name = "{}_inceptionA_c_2".format(from_name)
+    net[inception_c_2_name] = L.Convolution(net[inception_c_1_name],num_output = 96,kernel_size = 3,pad = 1,stride = 1,**kwargs)
+
+    inception_c_3_name = "{}_inceptionA_c_3".format(from_name)
+    net[inception_c_3_name] = L.Convolution(net[inception_c_2_name],num_output = 96,kernel_size = 3,pad = 1,stride = 1,**kwargs)
+
+    inceptions.append(net[inception_c_3_name])  
+
+    inception_d_1_name = "{}_inceptionA_d_1".format(from_name)
+    net[inception_d_1_name] = L.Pooling(net[from_name], pool=P.Pooling.AVE, pad=1, kernel_size=3, stride=1)
+          
+    inception_d_2_name = "{}_inceptionA_d_2".format(from_name)
+    net[inception_d_2_name] = L.Convolution(net[inception_d_1_name],num_output = 96,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+    inceptions.append(net[inception_d_2_name])
+
+    Inception_concat_name = "{}_inc_conc".format(from_name)
+          
+    net[inception_concat_name] = L.Concat(*inceptions,axis=1)
+
+
+    net[out_name] = L.Convolution(net[inception_concat_name],num_output = num_output,kernel_size = 1,pad=0,stride=1,**kwargs)
+
+
+def InceptionB(net,from_name,out_name,num_output,**kwargs):
+    inceptions = []
+
+    inception_a_1_name = "{}_inceptionB_a_1".format(from_name)
+    net[inception_a_1_name] = L.Convolution(net[from_name],num_output = 384,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+    inceptions.append(net[inception_a_1_name])
+
+    inception_b_1_name = "{}_inceptionB_b_1".format(from_name)
+    net[inception_b_1_name] = L.Convolution(net[from_name],num_output = 192,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+
+    inception_b_2_name = "{}_inceptionB_b_2".format(from_name)
+    net[inception_b_2_name] = L.Convolution(net[inception_b_1_name],num_output = 224,kernel_w = 7, kernel_h = 1 , pad_w = 3, pad_h = 0,stride_h = 1, stride_w = 1,**kwargs)
+
+    inception_b_3_name = "{}_inceptionB_b_3".format(from_name)
+    net[inception_b_3_name] = L.Convolution(net[inception_b_2_name],num_output = 256,kernel_w = 1, kernel_h = 7 , pad_w = 0, pad_h = 3,stride_h = 1, stride_w = 1,**kwargs)
+    inceptions.append(net[inception_b_3_name])
+
+    inception_c_1_name = "{}_inceptionB_c_1".format(from_name)
+    net[inception_c_1_name] = L.Convolution(net[from_name],num_output = 192,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+
+    inception_c_2_name = "{}_inceptionB_c_2".format(from_name)
+    net[inception_c_2_name] = L.Convolution(net[inception_c_1_name],num_output = 192,kernel_w = 1, kernel_h = 7 , pad_w = 0, pad_h = 3,stride_h = 1, stride_w = 1,**kwargs)
+
+    inception_c_3_name = "{}_inceptionB_c_3".format(from_name)
+    net[inception_c_3_name] = L.Convolution(net[inception_c_2_name],num_output = 224,kernel_w = 7, kernel_h = 1 , pad_w = 3, pad_h = 0,stride_h = 1, stride_w = 1,**kwargs)
+
+    inception_c_4_name = "{}_inceptionB_c_4".format(from_name)
+    net[inception_c_4_name] = L.Convolution(net[inception_c_3_name],num_output = 224,kernel_w = 1, kernel_h = 7 , pad_w = 0, pad_h = 3,stride_h = 1, stride_w = 1,**kwargs)
+
+    inception_c_5_name = "{}_inceptionB_c_5".format(from_name)
+    net[inception_c_5_name] = L.Convolution(net[inception_c_4_name],num_output = 256,kernel_w = 7, kernel_h = 1 , pad_w = 3, pad_h = 0,stride_h = 1, stride_w = 1,**kwargs)
+
+    inceptions.append(net[inception_c_5_name])  
+
+
+    inception_d_1_name = "{}_inceptionB_d_1".format(from_name)
+    net[inception_d_1_name] = L.Pooling(net[from_name], pool=P.Pooling.AVE, pad=1, kernel_size=3, stride=1)
+          
+    inception_d_2_name = "{}_inceptionB_d_2".format(from_name)
+    net[inception_d_2_name] = L.Convolution(net[inception_d_1_name],num_output = 128,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+    inceptions.append(net[inception_d_2_name])
+
+    Inception_concat_name = "{}_inc_conc".format(from_name)
+          
+    net[inception_concat_name] = L.Concat(*inceptions,axis=1)
+
+
+    net[out_name] = L.Convolution(net[inception_concat_name],num_output = num_output,kernel_size = 1,pad=0,stride=1,**kwargs)
+
+
+def InceptionC(net,from_name,out_name,num_output,**kwargs):
+    inceptions = []
+
+    inception_a_1_name = "{}_inceptionC_a_1".format(from_name)
+    net[inception_a_1_name] = L.Convolution(net[from_name],num_output = 256,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+    inceptions.append(net[inception_a_1_name])
+
+    inception_b_1_name = "{}_inceptionC_b_1".format(from_name)
+    net[inception_b_1_name] = L.Convolution(net[from_name],num_output = 384,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+
+    inception_b_21_name = "{}_inceptionC_b_21".format(from_name)
+    net[inception_b_2_name] = L.Convolution(net[inception_b_1_name],num_output = 256,kernel_w = 3, kernel_h = 1 , pad_w = 1, pad_h = 0,stride_h = 1, stride_w = 1,**kwargs)
+    inceptions.append(net[inception_b_21_name])
+
+    inception_b_22_name = "{}_inceptionC_b_22".format(from_name)
+    net[inception_b_22_name] = L.Convolution(net[inception_b_1_name],num_output = 256,kernel_w = 1, kernel_h = 3 , pad_w = 0, pad_h = 1,stride_h = 1, stride_w = 1,**kwargs)
+    inceptions.append(net[inception_b_22_name])
+
+    inception_c_1_name = "{}_inceptionC_c_1".format(from_name)
+    net[inception_c_1_name] = L.Convolution(net[from_name],num_output = 384,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+
+    inception_c_2_name = "{}_inceptionC_c_2".format(from_name)
+    net[inception_c_2_name] = L.Convolution(net[inception_c_1_name],num_output = 448,kernel_w = 1, kernel_h = 3 , pad_w = 0, pad_h = 1,stride_h = 1, stride_w = 1,**kwargs)
+
+    inception_c_3_name = "{}_inceptionC_c_3".format(from_name)
+    net[inception_c_3_name] = L.Convolution(net[inception_c_2_name],num_output = 512,kernel_w = 3, kernel_h = 1 , pad_w = 1, pad_h = 0,stride_h = 1, stride_w = 1,**kwargs)
+
+    inception_c_41_name = "{}_inceptionC_c_4".format(from_name)
+    net[inception_c_41_name] = L.Convolution(net[inception_c_3_name],num_output = 224,kernel_w = 1, kernel_h = 7 , pad_w = 0, pad_h = 3,stride_h = 1, stride_w = 1,**kwargs)
+    inceptions.append(net[inception_c_41_name]) 
+
+    inception_c_42_name = "{}_inceptionC_c_5".format(from_name)
+    net[inception_c_42_name] = L.Convolution(net[inception_c_3_name],num_output = 256,kernel_w = 7, kernel_h = 1 , pad_w = 3, pad_h = 0,stride_h = 1, stride_w = 1,**kwargs)
+    inceptions.append(net[inception_c_42_name])
+     
+
+
+    inception_d_1_name = "{}_inceptionC_d_1".format(from_name)
+    net[inception_d_1_name] = L.Pooling(net[from_name], pool=P.Pooling.AVE, pad=1, kernel_size=3, stride=1)
+          
+    inception_d_2_name = "{}_inceptionC_d_2".format(from_name)
+    net[inception_d_2_name] = L.Convolution(net[inception_d_1_name],num_output = 256,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+    inceptions.append(net[inception_d_2_name])
+
+    Inception_concat_name = "{}_inc_conc".format(from_name)
+          
+    net[inception_concat_name] = L.Concat(*inceptions,axis=1)
+
+    net[out_name] = L.Convolution(net[inception_concat_name],num_output = num_output,kernel_size = 1,pad=0,stride=1,**kwargs)
+
+
+def InceptionResnetA(net,from_name,out_name,num_output,**kwargs):
+    inceptions = []
+    inceptions.append(net[from_name])
+
+    mixed = []
+    mixed_name = "{}_inceptionResA_mixed".format(from_name)
+
+    mixed_out_name = "{}_inceptionResA_out".format(from_name)
+
+    inception_a_1_name = "{}_inceptionResA_a_1".format(from_name)
+    net[inception_a_1_name] = L.Convolution(net[from_name],num_output = 32,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+    mixed.append(net[inception_a_1_name])
+
+    inception_b_1_name = "{}_inceptionResA_b_1".format(from_name)
+    net[inception_b_1_name] = L.Convolution(net[from_name],num_output = 32,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+
+    inception_b_2_name = "{}_inceptionResA_b_2".format(from_name)
+    net[inception_b_2_name] = L.Convolution(net[inception_b_1_name],num_output = 32,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+    mixed.append(net[inception_b_2_name])
+
+
+
+    inception_c_1_name = "{}_inceptionResA_c_1".format(from_name)
+    net[inception_c_1_name] = L.Convolution(net[from_name],num_output = 32,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+
+    inception_c_2_name = "{}_inceptionResA_c_2".format(from_name)
+    net[inception_c_2_name] = L.Convolution(net[inception_c_1_name],num_output = 48,kernel_size = 3,pad = 1,stride = 1,**kwargs)
+
+    inception_c_3_name = "{}_inceptionResA_c_3".format(from_name)
+    net[inception_c_3_name] = L.Convolution(net[inception_c_2_name],num_output = 64,kernel_size = 3,pad = 1,stride = 1,**kwargs)
+
+    mixed.append(net[inception_c_3_name])
+
+    net[mixed_name] = L.Concat(*mixed,axis=1)
+
+    net[mixed_out_name] = L.Convolution(net[mixed_name],num_output = num_output,kernel_size=1,pad =0,stride =1,** kwargs)
+
+    inceptions.append(net[mixed_out_name])
+
+    net[out_name] = L.Concat(*inceptions,axis=1)
+
+
+
+def InceptionResnetB(net,from_name,out_name,num_output,**kwargs):
+    inceptions = []
+    inceptions.append(net[from_name])
+
+    mixed = []
+    mixed_name = "{}_inceptionResB_mixed".format(from_name)
+
+    mixed_out_name = "{}_inceptionResB_out".format(from_name)
+
+    inception_a_1_name = "{}_inceptionResB_a_1".format(from_name)
+    net[inception_a_1_name] = L.Convolution(net[from_name],num_output = 192,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+    mixed.append(net[inception_a_1_name])
+
+    inception_b_1_name = "{}_inceptionResB_b_1".format(from_name)
+    net[inception_b_1_name] = L.Convolution(net[from_name],num_output = 128,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+
+
+    inception_b_2_name = "{}_inceptionResB_b_2".format(from_name)
+    net[inception_b_2_name] = L.Convolution(net[inception_b_1_name],num_output = 160,kernel_w = 1,kernel_h = 7, pad_w = 0, pad_h = 3,stride = 1,**kwargs)
+
+    inception_b_3_name = "{}_inceptionResB_b_3".format(from_name)
+    net[inception_b_3_name] = L.Convolution(net[inception_b_2_name],num_output = 192,kernel_w = 7,kernel_h = 1, pad_w = 3, pad_h = 0,stride = 1,**kwargs)
+    mixed.append(net[inception_b_3_name])
+
+    net[mixed_name] = L.Concat(*mixed,axis=1)
+
+    net[mixed_out_name] = L.Convolution(net[mixed_name],num_output = num_output,kernel_size=1,pad =0,stride =1,** kwargs)
+
+    inceptions.append(net[mixed_out_name])
+
+    net[out_name] = L.Concat(*inceptions,axis=1)
+
+
+def InceptionResnetC(net,from_name,out_name,num_output,**kwargs):
+    inceptions = []
+    inceptions.append(net[from_name])
+
+    mixed = []
+    mixed_name = "{}_inceptionResC_mixed".format(from_name)
+
+    mixed_out_name = "{}_inceptionResC_out".format(from_name)
+
+    inception_a_1_name = "{}_inceptionResC_a_1".format(from_name)
+    net[inception_a_1_name] = L.Convolution(net[from_name],num_output = 192,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+    mixed.append(net[inception_a_1_name])
+
+    inception_b_1_name = "{}_inceptionResC_b_1".format(from_name)
+    net[inception_b_1_name] = L.Convolution(net[from_name],num_output = 192,kernel_size = 1,pad = 0,stride = 1,**kwargs)
+
+    inception_b_2_name = "{}_inceptionResC_b_2".format(from_name)
+    net[inception_b_2_name] = L.Convolution(net[inception_b_1_name],num_output = 224,kernel_w = 1,kernel_h = 3, pad_w = 0, pad_h = 1,stride = 1,**kwargs)
+
+    inception_b_3_name = "{}_inceptionResC_b_3".format(from_name)
+    net[inception_b_3_name] = L.Convolution(net[inception_b_2_name],num_output = 256,kernel_w = 7,kernel_h = 1, pad_w = 3, pad_h = 0,stride = 1,**kwargs)
+    mixed.append(net[inception_b_3_name])
+
+    net[mixed_name] = L.Concat(*mixed,axis=1)
+
+    net[mixed_out_name] = L.Convolution(net[mixed_name],num_output = num_output,kernel_size=1,pad =0,stride =1,** kwargs)
+
+    inceptions.append(net[mixed_out_name])
+
+    net[out_name] = L.Concat(*inceptions,axis=1)
