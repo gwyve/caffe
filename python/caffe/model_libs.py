@@ -922,13 +922,13 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
           if i == 0:
             InceptionResnetA(net,from_name=name,out_name=inception_out,num_output = 512,**inception_kwargs)
           elif i == 1:
-            InceptionResnetA(net,from_name=name,out_name=inception_out,num_output = 1024,**inception_kwargs)
+            InceptionResnetC(net,from_name=name,out_name=inception_out,num_output = 2048,**inception_kwargs)
           elif i == 2:
-            InceptionResnetB(net,from_name=name,out_name=inception_out,num_output = 512,**inception_kwargs)
+            InceptionResnetA(net,from_name=name,out_name=inception_out,num_output = 384,**inception_kwargs)
           elif i == 3:
-            InceptionResnetB(net,from_name=name,out_name=inception_out,num_output = 256,**inception_kwargs)
+            InceptionResnetB(net,from_name=name,out_name=inception_out,num_output = 512,**inception_kwargs)
           elif i == 4:
-            InceptionResnetC(net,from_name=name,out_name=inception_out,num_output = 256,**inception_kwargs)
+            InceptionResnetA(net,from_name=name,out_name=inception_out,num_output = 384,**inception_kwargs)
 
 
           inception_concat_conv = "{}_inc_output".format(inception_out)

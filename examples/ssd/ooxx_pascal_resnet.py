@@ -200,7 +200,7 @@ test_transform_param = {
         }
 
 # A learning rate for batch_size = 1, num_gpus = 1.
-base_lr = 0.00004
+base_lr = 0.00002
 
 # Modify the job name if you want.
 job_name = "SSD_{}".format(resize)
@@ -333,14 +333,14 @@ solver_param = {
     'base_lr': base_lr,
     'weight_decay': 0.0005,
     'lr_policy': "multistep",
-    'stepvalue': [45000,650000,80000],
+    'stepvalue': [35000,60000,80000,100000,120000],
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
     'max_iter': 150000,
     'snapshot': 5000,
-    'display': 10,
-    'average_loss': 10,
+    'display': 1,
+    'average_loss': 1,
     'type': "SGD",
     'solver_mode': solver_mode,
     'device_id': device_id,
