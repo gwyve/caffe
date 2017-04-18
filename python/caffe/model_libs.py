@@ -42,6 +42,17 @@ def ConvBNLayer(net, from_layer, out_layer, use_bn, use_relu, num_output,
     eps = bn_params.get('eps', 0.001)
     moving_average_fraction = bn_params.get('moving_average_fraction', 0.999)
     use_global_stats = bn_params.get('use_global_stats', False)
+    
+    # changed by veveve
+    need_learn = bn_params.get('need_learn',True)
+    if not need_learn:
+    	kwargs = {
+            'param':[dict(lr_mult=0,decay_mult=0)],
+            'weight_filler':dict(type='gaussian',std=0.01),
+            'bias_term':False,
+            }
+	
+    # end changed by veveve
     # parameters for batchnorm layer.
     bn_kwargs = {
         'param': [
@@ -455,6 +466,12 @@ def ResNet101Body(net, from_layer, use_pool5=True, use_dilation_conv5=False, **b
     bn_postfix = ''
     scale_prefix = 'scale_'
     scale_postfix = ''
+
+    # changed by veveve
+    
+    bn_param['need_learn'] = False
+    bn_param['use_global_stats'] = True
+    # changed by veveve
     ConvBNLayer(net, from_layer, 'conv1', use_bn=True, use_relu=True,
         num_output=64, kernel_size=7, pad=3, stride=2,
         conv_prefix=conv_prefix, conv_postfix=conv_postfix,
@@ -874,7 +891,7 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
 
         if i < 5:
           ConvBNLayer(net, from_layer, name, use_bn=True, use_relu=True,use_scale=True, lr_mult=lr_mult,
-            num_output=512, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+            num_output=256, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
 
           source_name = "{}_concat".format(name)
           inceptions = []
@@ -895,20 +912,20 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
           print(str(i)+"sssssssss"+ after_name)
 
           if i == 0:
-            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
+            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 256,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
           elif i == 1:
-            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 1,stride = 2,**inception_kwargs)
+            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 256,kernel_size = 3,pad = 1,stride = 2,**inception_kwargs)
           elif i == 2:
-            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
+            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 256,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
           elif i == 3:
-            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
+            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 256,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
           elif i == 4:
-            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
+            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 256,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
           
           batch_name = "{}_BN".format(after_deconv)
 
           ConvBNLayer(net, after_deconv, batch_name, use_bn=True, use_relu=True,use_scale=True, lr_mult=lr_mult,
-            num_output=512, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+            num_output=256, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
 
 
           inceptions.append(net[batch_name])
@@ -920,15 +937,15 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
           inception_out = "{}_inc_output".format(name)
 
           if i == 0:
-            InceptionResnetA(net,from_name=name,out_name=inception_out,num_output = 512,**inception_kwargs)
+            InceptionResnetA(net,from_name=name,out_name=inception_out,num_output = 256,**inception_kwargs)
           elif i == 1:
-            InceptionResnetA(net,from_name=name,out_name=inception_out,num_output = 512,**inception_kwargs)
+            InceptionResnetA(net,from_name=name,out_name=inception_out,num_output = 256,**inception_kwargs)
           elif i == 2:
-            InceptionResnetB(net,from_name=name,out_name=inception_out,num_output = 512,**inception_kwargs)
+            InceptionResnetB(net,from_name=name,out_name=inception_out,num_output = 256,**inception_kwargs)
           elif i == 3:
-            InceptionResnetC(net,from_name=name,out_name=inception_out,num_output = 512,**inception_kwargs)
+            InceptionResnetC(net,from_name=name,out_name=inception_out,num_output = 256,**inception_kwargs)
           elif i == 4:
-            InceptionResnetC(net,from_name=name,out_name=inception_out,num_output = 512,**inception_kwargs)
+            InceptionResnetC(net,from_name=name,out_name=inception_out,num_output = 256,**inception_kwargs)
 
 
           inception_concat_conv = "{}_inc_output".format(inception_out)
@@ -938,7 +955,7 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
           source_name = inception_concat_conv
 
           ConvBNLayer(net, inception_out, name, use_bn=use_batchnorm, use_relu=False, lr_mult=lr_mult,
-            num_output=num_loc_output , kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+            num_output=num_loc_output  , kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
 
           print(str(i)+"xxxxxxxxxx"+name)
 
@@ -946,7 +963,7 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
         else:
 	
           ConvBNLayer(net, from_layer, name, use_bn=use_batchnorm, use_relu=False, lr_mult=lr_mult,
-            num_output=512, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+            num_output=256, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
 	  name_output = "{}_output".format(name)
 	  ConvBNLayer(net, name,name_output,use_bn=use_batchnorm,use_relu=False,lr_mult=lr_mult,
 	    num_output=num_loc_output,kernel_size= kernel_size,pad=pad,stride=1,**bn_param)
