@@ -14,6 +14,7 @@ import sys
 def AddExtraLayers(net, use_batchnorm=True):
     use_relu = True
 
+
     # Add additional convolutional layers.
     # 19 x 19
     last_layer = net.keys()[-1]

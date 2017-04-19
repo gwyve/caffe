@@ -32,6 +32,8 @@ def ConvBNLayer(net, from_layer, out_layer, use_bn, use_relu, num_output,
     conv_prefix='', conv_postfix='', bn_prefix='', bn_postfix='_bn',
     scale_prefix='', scale_postfix='_scale', bias_prefix='', bias_postfix='_bias',
     **bn_params):
+
+  need_learn = True
   if use_bn:
     # parameters for convolution layer with batchnorm.
     kwargs = {
@@ -104,27 +106,55 @@ def ConvBNLayer(net, from_layer, out_layer, use_bn, use_relu, num_output,
   [kernel_h, kernel_w] = UnpackVariable(kernel_size, 2)
   [pad_h, pad_w] = UnpackVariable(pad, 2)
   [stride_h, stride_w] = UnpackVariable(stride, 2)
-  if kernel_h == kernel_w:
-    net[conv_name] = L.Convolution(net[from_layer], num_output=num_output,
-        kernel_size=kernel_h, pad=pad_h, stride=stride_h, **kwargs)
-  else:
-    net[conv_name] = L.Convolution(net[from_layer], num_output=num_output,
-        kernel_h=kernel_h, kernel_w=kernel_w, pad_h=pad_h, pad_w=pad_w,
-        stride_h=stride_h, stride_w=stride_w, **kwargs)
-  if dilation > 1:
-    net.update(conv_name, {'dilation': dilation})
-  if use_bn:
-    bn_name = '{}{}{}'.format(bn_prefix, out_layer, bn_postfix)
-    net[bn_name] = L.BatchNorm(net[conv_name], in_place=True, **bn_kwargs)
-    if use_scale:
-      sb_name = '{}{}{}'.format(scale_prefix, out_layer, scale_postfix)
-      net[sb_name] = L.Scale(net[bn_name], in_place=True, **sb_kwargs)
+
+  if need_learn:
+    if kernel_h == kernel_w:
+      net[conv_name] = L.Convolution(net[from_layer], num_output=num_output,
+          kernel_size=kernel_h, pad=pad_h, stride=stride_h, **kwargs)
     else:
-      bias_name = '{}{}{}'.format(bias_prefix, out_layer, bias_postfix)
-      net[bias_name] = L.Bias(net[bn_name], in_place=True, **bias_kwargs)
-  if use_relu:
-    relu_name = '{}_relu'.format(conv_name)
-    net[relu_name] = L.ReLU(net[conv_name], in_place=True)
+      net[conv_name] = L.Convolution(net[from_layer], num_output=num_output,
+          kernel_h=kernel_h, kernel_w=kernel_w, pad_h=pad_h, pad_w=pad_w,
+          stride_h=stride_h, stride_w=stride_w, **kwargs)
+    if dilation > 1:
+      net.update(conv_name, {'dilation': dilation})
+    if use_bn:
+      bn_name = '{}{}{}'.format(bn_prefix, out_layer, bn_postfix)
+      net[bn_name] = L.BatchNorm(net[conv_name], in_place=True, **bn_kwargs)
+      if use_scale:
+        sb_name = '{}{}{}'.format(scale_prefix, out_layer, scale_postfix)
+        net[sb_name] = L.Scale(net[bn_name], in_place=True, **sb_kwargs)
+      else:
+        bias_name = '{}{}{}'.format(bias_prefix, out_layer, bias_postfix)
+        net[bias_name] = L.Bias(net[bn_name], in_place=True, **bias_kwargs)
+    if use_relu:
+      relu_name = '{}_relu'.format(conv_name)
+      net[relu_name] = L.ReLU(net[conv_name], in_place=True)
+  else:
+    print("wwwwwwwwwwwwwwwwww"+conv_name)
+    if kernel_h == kernel_w:
+      net[conv_name] = L.Convolution(net[from_layer], num_output=num_output,
+          kernel_size=kernel_h, pad=pad_h, stride=stride_h, propagate_down = [False], **kwargs)
+    else:
+      net[conv_name] = L.Convolution(net[from_layer], num_output=num_output,
+          kernel_h=kernel_h, kernel_w=kernel_w, pad_h=pad_h, pad_w=pad_w,
+          stride_h=stride_h, stride_w=stride_w, **kwargs)
+    if dilation > 1:
+      net.update(conv_name, {'dilation': dilation})
+    if use_bn:
+      bn_name = '{}{}{}'.format(bn_prefix, out_layer, bn_postfix)
+      net[bn_name] = L.BatchNorm(net[conv_name], in_place=True, propagate_down = [False],**bn_kwargs)
+      if use_scale:
+        sb_name = '{}{}{}'.format(scale_prefix, out_layer, scale_postfix)
+        net[sb_name] = L.Scale(net[bn_name], in_place=True, propagate_down = [False],**sb_kwargs)
+      else:
+        bias_name = '{}{}{}'.format(bias_prefix, out_layer, bias_postfix)
+        net[bias_name] = L.Bias(net[bn_name], in_place=True, propagate_down = [False],**bias_kwargs)
+    if use_relu:
+      relu_name = '{}_relu'.format(conv_name)
+      net[relu_name] = L.ReLU(net[conv_name], in_place=True,propagate_down = [False])
+
+
+
 
 def ResBody(net, from_layer, block_name, out2a, out2b, out2c, stride, use_branch1, dilation=1, **bn_param):
   # ResBody(net, 'pool1', '2a', 64, 64, 256, 1, True)

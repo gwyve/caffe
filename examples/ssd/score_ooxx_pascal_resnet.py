@@ -237,7 +237,10 @@ if max_iter == 0:
 # Stores the test image names and sizes. Created by data/VOC0712/create_list.sh
 name_size_file = "data/VOC0712/test_name_size.txt"
 # The pretrained ResNet101 model from https://github.com/KaimingHe/deep-residual-networks.
-pretrain_model = "models/ResNet/ResNet-101-model.caffemodel"
+# pretrain_model = "models/ResNet/ResNet-101-model.caffemodel"
+
+pretrain_model = "{}_iter_{}.caffemodel".format(snapshot_prefix,max_iter)
+
 # Stores LabelMapItem.
 label_map_file = "data/VOC0712/labelmap_voc.prototxt"
 
@@ -294,7 +297,7 @@ for ratio in xrange(min_ratio, max_ratio + 1, step):
 min_sizes = [min_dim * 10 / 100.] + min_sizes
 max_sizes = [[]] + max_sizes
 #aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3]]
-aspect_ratios = [[1.4,2,3],[1.4,2,3],[1.4,2,3],[1.4,2,3],[1.4,2,3],[1.4,2,3]]
+aspect_ratios = [[1.6,2,3],[1.6,2,3],[1.6,2,3],[1.6,2,3],[1.6,2,3],[1.6,2,3]]
 # variance used to encode/decode prior bboxes.
 if code_type == P.PriorBox.CENTER_SIZE:
   prior_variance = [0.1, 0.1, 0.2, 0.2]
