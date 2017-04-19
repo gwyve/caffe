@@ -286,7 +286,7 @@ for ratio in xrange(min_ratio, max_ratio + 1, step):
 min_sizes = [min_dim * 10 / 100.] + min_sizes
 max_sizes = [[]] + max_sizes
 #aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3]]
-aspect_ratios = [[1.4,2,3],[1.4,2,3],[1.4,2,3],[1.4,2,3],[1.4,2,3],[1.4,2,3]]
+aspect_ratios = [[1.6,2,3],[1.6,2,3],[1.6,2,3],[1.6,2,3],[1.6,2,3],[1.6,2,3]]
 # variance used to encode/decode prior bboxes.
 if code_type == P.PriorBox.CENTER_SIZE:
   prior_variance = [0.1, 0.1, 0.2, 0.2]
