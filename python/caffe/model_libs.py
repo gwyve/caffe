@@ -532,7 +532,7 @@ def ResNet101Body(net, from_layer, use_pool5=True, use_dilation_conv5=False, **b
 
     stride = 2
     dilation = 1
-    if use_dilation_conv5:
+    if use_dilation_conv5: 
       stride = 1
       dilation = 2
 
@@ -921,7 +921,7 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
 
         if i < 5:
           ConvBNLayer(net, from_layer, name, use_bn=True, use_relu=True,use_scale=True, lr_mult=lr_mult,
-            num_output=256, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+            num_output=512, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
 
           source_name = "{}_concat".format(name)
           inceptions = []
@@ -942,20 +942,20 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
           print(str(i)+"sssssssss"+ after_name)
 
           if i == 0:
-            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 256,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
+            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
           elif i == 1:
-            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 256,kernel_size = 3,pad = 1,stride = 2,**inception_kwargs)
+            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
           elif i == 2:
-            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 256,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
+            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
           elif i == 3:
-            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 256,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
+            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
           elif i == 4:
-            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 256,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
+            net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
           
           batch_name = "{}_BN".format(after_deconv)
 
           ConvBNLayer(net, after_deconv, batch_name, use_bn=True, use_relu=True,use_scale=True, lr_mult=lr_mult,
-            num_output=256, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+            num_output=512, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
 
 
           inceptions.append(net[batch_name])
@@ -967,15 +967,15 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
           inception_out = "{}_inc_output".format(name)
 
           if i == 0:
-            InceptionResnetA(net,from_name=name,out_name=inception_out,num_output = 256,**inception_kwargs)
+            InceptionResnetA(net,from_name=name,out_name=inception_out,num_output = 512,**inception_kwargs)
           elif i == 1:
-            InceptionResnetA(net,from_name=name,out_name=inception_out,num_output = 256,**inception_kwargs)
+            InceptionResnetA(net,from_name=name,out_name=inception_out,num_output = 512,**inception_kwargs)
           elif i == 2:
-            InceptionResnetB(net,from_name=name,out_name=inception_out,num_output = 256,**inception_kwargs)
+            InceptionResnetB(net,from_name=name,out_name=inception_out,num_output = 512,**inception_kwargs)
           elif i == 3:
-            InceptionResnetC(net,from_name=name,out_name=inception_out,num_output = 256,**inception_kwargs)
+            InceptionResnetC(net,from_name=name,out_name=inception_out,num_output = 512,**inception_kwargs)
           elif i == 4:
-            InceptionResnetC(net,from_name=name,out_name=inception_out,num_output = 256,**inception_kwargs)
+            InceptionResnetC(net,from_name=name,out_name=inception_out,num_output = 512,**inception_kwargs)
 
 
           inception_concat_conv = "{}_inc_output".format(inception_out)
@@ -993,7 +993,7 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
         else:
 	
           ConvBNLayer(net, from_layer, name, use_bn=use_batchnorm, use_relu=False, lr_mult=lr_mult,
-            num_output=256, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
+            num_output=512, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
 	  name_output = "{}_output".format(name)
 	  ConvBNLayer(net, name,name_output,use_bn=use_batchnorm,use_relu=False,lr_mult=lr_mult,
 	    num_output=num_loc_output,kernel_size= kernel_size,pad=pad,stride=1,**bn_param)

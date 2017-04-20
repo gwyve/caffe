@@ -14,6 +14,7 @@ import sys
 def AddExtraLayers(net, use_batchnorm=True):
     use_relu = True
 
+    
 
     # Add additional convolutional layers.
     # 19 x 19
@@ -21,26 +22,39 @@ def AddExtraLayers(net, use_batchnorm=True):
 
     # 10 x 10
     from_layer = last_layer
-    out_layer = "{}/conv1_1".format(last_layer)
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 1, 0, 1)
-    from_layer = out_layer
+    # out_layer = "{}/conv1_1".format(last_layer)
+    # ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 1, 0, 1)
+    out_layer = "6"
+    ResBody(net, from_layer, out_layer,out2a=256,out2b=256,out2c=1024,stride=2,use_branch1=True)
+    from_layer = "res{}_relu".format(out_layer)
+ 
+    # out_layer = "{}/conv1_2".format(last_layer)
+    # ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 512, 3, 1, 2)
+    out_layer = "7"
+    ResBody(net, from_layer, out_layer, out2a=256,out2b=256,out2c=1024,stride=2,use_branch1=True)
+    from_layer = "res{}_relu".format(out_layer)
 
-    out_layer = "{}/conv1_2".format(last_layer)
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 512, 3, 1, 2)
-    from_layer = out_layer
 
-    for i in xrange(2, 4):
-      out_layer = "{}/conv{}_1".format(last_layer, i)
-      ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 1, 0, 1)
-      from_layer = out_layer
+    out_layer = "8"
+    ResBody(net, from_layer, out_layer, out2a=256,out2b=256,out2c=1024,stride=1,use_branch1=True)
+    from_layer = "res{}_relu".format(out_layer)
+ 
+    out_layer = "9"
+    ResBody(net, from_layer, out_layer, out2a=256,out2b=256,out2c=1024,stride=2,use_branch1=True)
 
-      out_layer = "{}/conv{}_2".format(last_layer, i)
-      ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 512, 3, 1, 2)
-      from_layer = out_layer
+
+    # for i in xrange(2, 4):
+    #  out_layer = "{}/conv{}_1".format(last_layer, i)
+    #  ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 1, 0, 1)
+    #  from_layer = out_layer
+    #
+    #  out_layer = "{}/conv{}_2".format(last_layer, i)
+    #  ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 512, 3, 1, 2)
+    #  from_layer = out_layer
 
     # Add global pooling layer.
-    name = net.keys()[-1]
-    net.pool6 = L.Pooling(net[name], pool=P.Pooling.AVE, global_pooling=True)
+    # name = net.keys()[-1]
+    # net.pool6 = L.Pooling(net[name], pool=P.Pooling.AVE, global_pooling=True)
 
     return net
 
@@ -274,7 +288,7 @@ min_dim = 300
 # res5c_relu/conv2_2 ==> 5 x 5
 # res5c_relu/conv3_2 ==> 3 x 3
 # pool6 ==> 1 x 1
-mbox_source_layers = ['res3b3_relu', 'res5c_relu', 'res5c_relu/conv1_2', 'res5c_relu/conv2_2', 'res5c_relu/conv3_2', 'pool6']
+mbox_source_layers = ['res3b3_relu', 'res5c_relu', 'res6_relu', 'res7_relu', 'res8_relu', 'res9_relu']
 # in percent %
 min_ratio = 20
 max_ratio = 95
@@ -340,8 +354,8 @@ solver_param = {
     'iter_size': iter_size,
     'max_iter': 150000,
     'snapshot': 5000,
-    'display': 1,
-    'average_loss': 1,
+    'display': 10,
+    'average_loss': 10,
     'type': "SGD",
     'solver_mode': solver_mode,
     'device_id': device_id,
