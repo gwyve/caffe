@@ -166,11 +166,15 @@ def ResBody(net, from_layer, block_name, out2a, out2b, out2c, stride, use_branch
   scale_prefix = 'scale{}_'.format(block_name)
   scale_postfix = ''
   use_scale = True
+	
+
+  is_extra = bn_param.get("is_extra",False)
 
   if use_branch1:
     branch_name = 'branch1'
+    branch1_kernel = bn_param.get("branch1_kernel",1)
     ConvBNLayer(net, from_layer, branch_name, use_bn=True, use_relu=False,
-        num_output=out2c, kernel_size=1, pad=0, stride=stride, use_scale=use_scale,
+        num_output=out2c, kernel_size=branch1_kernel, pad=0, stride=stride, use_scale=use_scale,
         conv_prefix=conv_prefix, conv_postfix=conv_postfix,
         bn_prefix=bn_prefix, bn_postfix=bn_postfix,
         scale_prefix=scale_prefix, scale_postfix=scale_postfix, **bn_param)
@@ -179,8 +183,9 @@ def ResBody(net, from_layer, block_name, out2a, out2b, out2c, stride, use_branch
     branch1 = from_layer
 
   branch_name = 'branch2a'
+  branch2a_kernel = bn_param.get("branch2a_kernel",1)
   ConvBNLayer(net, from_layer, branch_name, use_bn=True, use_relu=True,
-      num_output=out2a, kernel_size=1, pad=0, stride=stride, use_scale=use_scale,
+      num_output=out2a, kernel_size=branch2a_kernel, pad=0, stride=stride, use_scale=use_scale,
       conv_prefix=conv_prefix, conv_postfix=conv_postfix,
       bn_prefix=bn_prefix, bn_postfix=bn_postfix,
       scale_prefix=scale_prefix, scale_postfix=scale_postfix, **bn_param)

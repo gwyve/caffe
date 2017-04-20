@@ -14,7 +14,9 @@ import sys
 def AddExtraLayers(net, use_batchnorm=True):
     use_relu = True
 
-    
+    bn_param={}
+    bn_param["branch1_kernel"] = 2
+    bn_param["branch2a_kernel"] = 2
 
     # Add additional convolutional layers.
     # 19 x 19
@@ -25,22 +27,24 @@ def AddExtraLayers(net, use_batchnorm=True):
     # out_layer = "{}/conv1_1".format(last_layer)
     # ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 1, 0, 1)
     out_layer = "6"
-    ResBody(net, from_layer, out_layer,out2a=256,out2b=256,out2c=1024,stride=2,use_branch1=True)
+    ResBody(net, from_layer, out_layer,out2a=256,out2b=256,out2c=1024,stride=2,use_branch1=True,**bn_param)
     from_layer = "res{}_relu".format(out_layer)
  
     # out_layer = "{}/conv1_2".format(last_layer)
     # ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 512, 3, 1, 2)
     out_layer = "7"
-    ResBody(net, from_layer, out_layer, out2a=256,out2b=256,out2c=1024,stride=2,use_branch1=True)
+    ResBody(net, from_layer, out_layer, out2a=256,out2b=256,out2c=1024,stride=2,use_branch1=True,**bn_param)
     from_layer = "res{}_relu".format(out_layer)
 
-
+    
+    bn_param["branch1_kernel"] = 3
+    bn_param["branch2a_kernel"] = 3
     out_layer = "8"
-    ResBody(net, from_layer, out_layer, out2a=256,out2b=256,out2c=1024,stride=1,use_branch1=True)
+    ResBody(net, from_layer, out_layer, out2a=256,out2b=256,out2c=1024,stride=1,use_branch1=True,**bn_param)
     from_layer = "res{}_relu".format(out_layer)
  
     out_layer = "9"
-    ResBody(net, from_layer, out_layer, out2a=256,out2b=256,out2c=1024,stride=2,use_branch1=True)
+    ResBody(net, from_layer, out_layer, out2a=256,out2b=256,out2c=1024,stride=1,use_branch1=True,**bn_param)
 
 
     # for i in xrange(2, 4):
