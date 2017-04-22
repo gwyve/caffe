@@ -559,5 +559,5 @@ shutil.copy(py_file, job_dir)
 
 # Run the job.
 os.chmod(job_file, stat.S_IRWXU)
-#if run_soon:
-#  subprocess.call(job_file, shell=True)
+if run_soon:
+  subprocess.call(job_file, shell=True)
