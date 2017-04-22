@@ -285,7 +285,7 @@ loss_param = {
 
 # parameters for generating priors.
 # minimum dimension of input image
-min_dim = 300
+min_dim = 321
 # res3b3_relu ==> 38 x 38
 # res5c_relu ==> 19 x 19
 # res5c_relu/conv1_2 ==> 10 x 10
@@ -303,10 +303,12 @@ for ratio in xrange(min_ratio, max_ratio + 1, step):
   min_sizes.append(min_dim * ratio / 100.)
   max_sizes.append(min_dim * (ratio + step) / 100.)
 min_sizes = [min_dim * 10 / 100.] + min_sizes
-max_sizes = [[]] + max_sizes
+max_sizes = [min_sizes[1]] + max_sizes
 #aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3]]
 aspect_ratios = [[1.6,2,3],[1.6,2,3],[1.6,2,3],[1.6,2,3],[1.6,2,3],[1.6,2,3]]
 # variance used to encode/decode prior bboxes.
+offsets=[2.5,2.5,10.5,26.5,90.5,160.5]
+steps=[8,16,32,64,64,321]
 if code_type == P.PriorBox.CENTER_SIZE:
   prior_variance = [0.1, 0.1, 0.2, 0.2]
 else:
@@ -422,11 +424,14 @@ ResNet101Body(net, from_layer='data', use_pool5=False, use_dilation_conv5=True)
 # Use batch norm for the newly added layers.
 AddExtraLayers(net, use_batchnorm=True)
 
+print(min_sizes)
+print(max_sizes)
+
 # Don't use batch norm for location/confidence prediction layers.
 mbox_layers = CreateMultiBoxHead(net, data_layer='data', from_layers=mbox_source_layers,
         use_batchnorm=False, min_sizes=min_sizes, max_sizes=max_sizes,
-        aspect_ratios=aspect_ratios, num_classes=num_classes, share_location=share_location,
-        flip=flip, clip=clip, prior_variance=prior_variance, kernel_size=3, pad=1)
+        aspect_ratios=aspect_ratios,steps=steps, num_classes=num_classes, share_location=share_location,
+        flip=flip, clip=clip,offsets=offsets, prior_variance=prior_variance, kernel_size=3, pad=1)
 
 # Create the MultiBoxLossLayer.
 name = "mbox_loss"
@@ -455,7 +460,7 @@ AddExtraLayers(net, use_batchnorm=True)
 mbox_layers = CreateMultiBoxHead(net, data_layer='data', from_layers=mbox_source_layers,
         use_batchnorm=False, min_sizes=min_sizes, max_sizes=max_sizes,
         aspect_ratios=aspect_ratios, num_classes=num_classes, share_location=share_location,
-        flip=flip, clip=clip, prior_variance=prior_variance, kernel_size=3, pad=1)
+        flip=flip, clip=clip,offsets=offsets, prior_variance=prior_variance, kernel_size=3, pad=1)
 
 conf_name = "mbox_conf"
 if multibox_loss_param["conf_loss_type"] == P.MultiBoxLoss.SOFTMAX:
@@ -554,5 +559,5 @@ shutil.copy(py_file, job_dir)
 
 # Run the job.
 os.chmod(job_file, stat.S_IRWXU)
-if run_soon:
-  subprocess.call(job_file, shell=True)
+#if run_soon:
+#  subprocess.call(job_file, shell=True)

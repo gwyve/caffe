@@ -130,7 +130,6 @@ def ConvBNLayer(net, from_layer, out_layer, use_bn, use_relu, num_output,
       relu_name = '{}_relu'.format(conv_name)
       net[relu_name] = L.ReLU(net[conv_name], in_place=True)
   else:
-    print("wwwwwwwwwwwwwwwwww"+conv_name)
     if kernel_h == kernel_w:
       net[conv_name] = L.Convolution(net[from_layer], num_output=num_output,
           kernel_size=kernel_h, pad=pad_h, stride=stride_h, propagate_down = [False], **kwargs)
@@ -845,7 +844,7 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
         use_objectness=False, normalizations=[], use_batchnorm=True, lr_mult=1,
         use_scale=True, min_sizes=[], max_sizes=[], prior_variance = [0.1],
         aspect_ratios=[], steps=[], img_height=0, img_width=0, share_location=True,
-        flip=True, clip=True, offset=0.5, inter_layer_depth=[], kernel_size=1, pad=0,
+        flip=True, clip=True, offsets=[], inter_layer_depth=[], kernel_size=1, pad=0,
         conf_postfix='', loc_postfix='', **bn_param):
     assert num_classes, "must provide num_classes"
     assert num_classes > 0, "num_classes must be positive number"
@@ -870,7 +869,8 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
     objectness_layers = []
     for i in range(0, num)[::-1]:
         from_layer = from_layers[i]
-
+   
+        offset = offsets[i]
         # Get the normalize value.
         if normalizations:
             if normalizations[i] != -1:
@@ -944,7 +944,7 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
 
           after_deconv = "{}_deconv".format(after_name)
 
-          print(str(i)+"sssssssss"+ after_name)
+          # print(str(i)+"sssssssss"+ after_name)
 
           if i == 0:
             net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
@@ -992,7 +992,7 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
           ConvBNLayer(net, inception_out, name, use_bn=use_batchnorm, use_relu=False, lr_mult=lr_mult,
             num_output=num_loc_output  , kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
 
-          print(str(i)+"xxxxxxxxxx"+name)
+          # print(str(i)+"xxxxxxxxxx"+name)
 
 
         else:
@@ -1004,7 +1004,7 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
 	    num_output=num_loc_output,kernel_size= kernel_size,pad=pad,stride=1,**bn_param)
 	  name = name_output 
 
-          print(str(i)+"xxxxxxxxxx"+name)
+          # print(str(i)+"xxxxxxxxxx"+name)
 
         #end changed by  veveveve
 
