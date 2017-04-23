@@ -1258,8 +1258,7 @@ def InceptionResnetA(net,from_name,out_name,num_output,**kwargs):
 
     mixed.append(net[inception_c_3_name])
 
-    # net[mixed_name] = L.Concat(*mixed,axis=1)
-    net[mixed_name] = L.Eltwise(net[inception_a_1_name],net[inception_b_2_name],net[inception_c_3_name],eltwise_param={'operation':P.Eltwise.PROD})
+    net[mixed_name] = L.Concat(*mixed,axis=1)
 
     net[mixed_out_name] = L.Convolution(net[mixed_name],num_output = num_output,kernel_size=1,pad =0,stride =1,** kwargs)
 
@@ -1293,8 +1292,7 @@ def InceptionResnetB(net,from_name,out_name,num_output,**kwargs):
     net[inception_b_3_name] = L.Convolution(net[inception_b_2_name],num_output = 192,kernel_w = 7,kernel_h = 1, pad_w = 3, pad_h = 0,stride = 1,**kwargs)
     mixed.append(net[inception_b_3_name])
 
-    # net[mixed_name] = L.Concat(*mixed,axis=1)
-    net[mixed_name] = L.Eltwise(net[inception_a_1_name],net[inception_b_3_name],eltwise_param={'operation':P.Eltwise.PROD})
+    net[mixed_name] = L.Concat(*mixed,axis=1)
 
     net[mixed_out_name] = L.Convolution(net[mixed_name],num_output = num_output,kernel_size=1,pad =0,stride =1,** kwargs)
 
@@ -1326,8 +1324,7 @@ def InceptionResnetC(net,from_name,out_name,num_output,**kwargs):
     net[inception_b_3_name] = L.Convolution(net[inception_b_2_name],num_output = 256,kernel_w = 7,kernel_h = 1, pad_w = 3, pad_h = 0,stride = 1,**kwargs)
     mixed.append(net[inception_b_3_name])
 
-    # net[mixed_name] = L.Concat(*mixed,axis=1)
-    net[mixed_name] = L.Eltwise(net[inception_a_1_name],net[inception_b_3_name],eltwise_param={'operation':P.Eltwise.PROD})
+    net[mixed_name] = L.Concat(*mixed,axis=1)
 
     net[mixed_out_name] = L.Convolution(net[mixed_name],num_output = num_output,kernel_size=1,pad =0,stride =1,** kwargs)
 
