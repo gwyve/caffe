@@ -664,6 +664,7 @@ message NoiseParameter {
   optional bool convert_to_lab = 13 [default = false];
 }
 
+// NOTE: the related with the DataGain
 // Message that stores parameters used by data transformer for distortion policy
 message DistortionParameter {
   // The probability of adjusting brightness.
