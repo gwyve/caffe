@@ -234,8 +234,7 @@ void DataTransformer<Dtype>::Transform(const vector<Datum> & datum_vector,
     Transform(datum_vector[item_id], &uni_blob);
   }
 }
-//NOTE:
-// 这里是数据增强阶段调用的annotated_data_layer.cpp：232行中进行调用的最终入口
+
 template<typename Dtype>
 void DataTransformer<Dtype>::Transform(
     const AnnotatedDatum& anno_datum, Blob<Dtype>* transformed_blob,
@@ -244,7 +243,6 @@ void DataTransformer<Dtype>::Transform(
   // Transform datum.
   const Datum& datum = anno_datum.datum();
   NormalizedBBox crop_bbox;
-  // 转化数据到blob中 transformed_blob
   Transform(datum, transformed_blob, &crop_bbox, do_mirror);
 
   // Transform annotation.
@@ -299,7 +297,7 @@ void DataTransformer<Dtype>::TransformAnnotation(
       for (int a = 0; a < anno_group.annotation_size(); ++a) {
         const Annotation& anno = anno_group.annotation(a);
         const NormalizedBBox& bbox = anno.bbox();
-        // Adjust bounding box annotation. Bounding Box进行调整
+        // Adjust bounding box annotation.
         NormalizedBBox resize_bbox = bbox;
         if (do_resize && param_.has_resize_param()) {
           CHECK_GT(img_height, 0);
@@ -312,7 +310,6 @@ void DataTransformer<Dtype>::TransformAnnotation(
                                 param_.emit_constraint())) {
           continue;
         }
-        
         NormalizedBBox proj_bbox;
         if (ProjectBBox(crop_bbox, resize_bbox, &proj_bbox)) {
           has_valid_annotation = true;
