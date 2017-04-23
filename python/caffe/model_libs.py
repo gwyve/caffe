@@ -929,8 +929,8 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
             num_output=512, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
 
           source_name = "{}_concat".format(name)
-          inceptions = []
-          inceptions.append(net[name])
+          # inceptions = []
+          # inceptions.append(net[name])
             
           inception_kwargs = {
               'param': [dict(lr_mult=1, decay_mult=1), dict(lr_mult=2, decay_mult=0)],
@@ -963,9 +963,9 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
             num_output=512, kernel_size=kernel_size, pad=pad, stride=1, **bn_param)
 
 
-          inceptions.append(net[batch_name])
-
-          net[source_name] = L.Concat(*inceptions,axis=1)
+          #inceptions.append(net[batch_name])
+          print(source_name)
+          net[source_name] = L.Eltwise(net[name],net[batch_name],eltwise_param={'operation':P.Eltwise.PROD})
 
           name = source_name
 
@@ -1258,13 +1258,14 @@ def InceptionResnetA(net,from_name,out_name,num_output,**kwargs):
 
     mixed.append(net[inception_c_3_name])
 
-    net[mixed_name] = L.Concat(*mixed,axis=1)
+    # net[mixed_name] = L.Concat(*mixed,axis=1)
+    net[mixed_name] = L.Eltwise(net[inception_a_1_name],net[inception_b_2_name],net[inception_c_3_name],eltwise_param={'operation':P.Eltwise.PROD})
 
     net[mixed_out_name] = L.Convolution(net[mixed_name],num_output = num_output,kernel_size=1,pad =0,stride =1,** kwargs)
 
     inceptions.append(net[mixed_out_name])
 
-    net[out_name] = L.Concat(*inceptions,axis=1)
+    net[out_name] = L.Eltwise(net[from_name],net[mixed_out_name],eltwise_param={'operation':P.Eltwise.PROD})
 
 
 
@@ -1292,13 +1293,14 @@ def InceptionResnetB(net,from_name,out_name,num_output,**kwargs):
     net[inception_b_3_name] = L.Convolution(net[inception_b_2_name],num_output = 192,kernel_w = 7,kernel_h = 1, pad_w = 3, pad_h = 0,stride = 1,**kwargs)
     mixed.append(net[inception_b_3_name])
 
-    net[mixed_name] = L.Concat(*mixed,axis=1)
+    # net[mixed_name] = L.Concat(*mixed,axis=1)
+    net[mixed_name] = L.Eltwise(net[inception_a_1_name],net[inception_b_3_name],eltwise_param={'operation':P.Eltwise.PROD})
 
     net[mixed_out_name] = L.Convolution(net[mixed_name],num_output = num_output,kernel_size=1,pad =0,stride =1,** kwargs)
 
     inceptions.append(net[mixed_out_name])
 
-    net[out_name] = L.Concat(*inceptions,axis=1)
+    net[out_name] = L.Eltwise(net[from_name],net[mixed_out_name],eltwise_param={'operation':P.Eltwise.PROD})
 
 
 def InceptionResnetC(net,from_name,out_name,num_output,**kwargs):
@@ -1324,10 +1326,11 @@ def InceptionResnetC(net,from_name,out_name,num_output,**kwargs):
     net[inception_b_3_name] = L.Convolution(net[inception_b_2_name],num_output = 256,kernel_w = 7,kernel_h = 1, pad_w = 3, pad_h = 0,stride = 1,**kwargs)
     mixed.append(net[inception_b_3_name])
 
-    net[mixed_name] = L.Concat(*mixed,axis=1)
+    # net[mixed_name] = L.Concat(*mixed,axis=1)
+    net[mixed_name] = L.Eltwise(net[inception_a_1_name],net[inception_b_3_name],eltwise_param={'operation':P.Eltwise.PROD})
 
     net[mixed_out_name] = L.Convolution(net[mixed_name],num_output = num_output,kernel_size=1,pad =0,stride =1,** kwargs)
 
     inceptions.append(net[mixed_out_name])
 
-    net[out_name] = L.Concat(*inceptions,axis=1)
+    net[out_name] = L.Eltwise(net[from_name],net[mixed_out_name],eltwise_param={'operation':P.Eltwise.PROD})
