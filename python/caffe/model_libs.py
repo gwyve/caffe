@@ -1206,7 +1206,7 @@ def CreateMultiBoxHead_ooxx(net,head_inception = False, use_inception=False, use
             ConvBNLayer(net, deconv_name, deBN_name, use_bn=True, use_relu=False,use_scale=True, lr_mult=lr_mult,
               num_output=512, kernel_size=3, pad=pad, stride=1, **bn_param)
 
-            if use_deconv_equal:
+            if use_deconv_equal and use_deconv:
               BN_name1 = "{}_bn1".format(from_layer)
               ConvBNLayer(net, from_layer, BN_name1, use_bn=True, use_relu=True,use_scale=True, lr_mult=lr_mult,
                 num_output=512, kernel_size=3, pad=pad, stride=1, **bn_param)
@@ -1214,12 +1214,14 @@ def CreateMultiBoxHead_ooxx(net,head_inception = False, use_inception=False, use
               ConvBNLayer(net, BN_name1, BN_name2, use_bn=True, use_relu=False,use_scale=True, lr_mult=lr_mult,
                 num_output=512, kernel_size=3, pad=pad, stride=1, **bn_param)
               from_layer = BN_name2
-
-            Eltwise_name = "{}_Eltwise".format(from_layers[i])
-            net[Eltwise_name] = L.Eltwise(net[from_layer],net[deBN_name],eltwise_param={'operation':P.Eltwise.PROD})
-            Eltwise_Relu_name = "{}_Relu".format(Eltwise_name)
-            net[Eltwise_Relu_name] = L.ReLU(net[Eltwise_name], in_place=True)
-            from_layer = Eltwise_Relu_name
+            if use_deconv and (use_inception or use_deconv_equal):
+              Eltwise_name = "{}_Eltwise".format(from_layers[i])
+              net[Eltwise_name] = L.Eltwise(net[from_layer],net[deBN_name],eltwise_param={'operation':P.Eltwise.PROD})
+              Eltwise_Relu_name = "{}_Relu".format(Eltwise_name)
+              net[Eltwise_Relu_name] = L.ReLU(net[Eltwise_name], in_place=True)
+              from_layer = Eltwise_Relu_name
+            elif use_deconv:
+              from_layer = deconv_name
 
         if head_inception:
           head_inception_name = "{}_head_inception".format(from_layer)
