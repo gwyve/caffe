@@ -1085,7 +1085,7 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
     return mbox_layers
 
 
-def CreateMultiBoxHead_ooxx(net,use_inception=False, use_deconv =False,use_deconv_equal = False, 
+def CreateMultiBoxHead_ooxx(net,head_inception = False, use_inception=False, use_deconv =False,use_deconv_equal = False, 
         data_layer="data", num_classes=[], from_layers=[],
         use_objectness=False, normalizations=[], use_batchnorm=True, lr_mult=1,
         use_scale=True, min_sizes=[], max_sizes=[], prior_variance = [0.1],
@@ -1168,20 +1168,20 @@ def CreateMultiBoxHead_ooxx(net,use_inception=False, use_deconv =False,use_decon
               'weight_filler': dict(type='xavier'),
               'bias_filler': dict(type='constant', value=0)}  
         
-        # if use_inception:
-        #   inception_name = "{}_inception".format(from_layer)
-        #   if i == 0:
-        #     InceptionResnetA(net,from_name=from_layer,out_name=inception_name,num_output = 512,**inception_kwargs)
-        #   elif i == 1:
-        #     InceptionResnetA(net,from_name=from_layer,out_name=inception_name,num_output = 512,**inception_kwargs)
-        #   elif i == 2:
-        #     InceptionResnetB(net,from_name=from_layer,out_name=inception_name,num_output = 512,**inception_kwargs)
-        #   elif i == 3:
-        #     InceptionResnetC(net,from_name=from_layer,out_name=inception_name,num_output = 512,**inception_kwargs)
-        #   elif i == 4:
-        #     InceptionResnetC(net,from_name=from_layer,out_name=inception_name,num_output = 512,**inception_kwargs)
-
-        #   from_layer = inception_name  
+        if use_inception:
+          inception_name = "{}_inception".format(from_layer)
+          if i == 0:
+            InceptionResnetA(net,from_name=from_layer,out_name=inception_name,num_output = 512,**inception_kwargs)
+          elif i == 1:
+            InceptionResnetA(net,from_name=from_layer,out_name=inception_name,num_output = 512,**inception_kwargs)
+          elif i == 2:
+            InceptionResnetB(net,from_name=from_layer,out_name=inception_name,num_output = 512,**inception_kwargs)
+          elif i == 3:
+            InceptionResnetC(net,from_name=from_layer,out_name=inception_name,num_output = 512,**inception_kwargs)
+          elif i == 4:
+            InceptionResnetC(net,from_name=from_layer,out_name=inception_name,num_output = 512,**inception_kwargs)
+          if i != 5:
+            from_layer = inception_name  
 
         if use_deconv:
           if i < 5:
@@ -1189,7 +1189,7 @@ def CreateMultiBoxHead_ooxx(net,use_inception=False, use_deconv =False,use_decon
               after_name = from_layers[i+1]
             else:
               after_name = "{}_Eltwise".format(from_layers[i+1])
-            print(after_name)
+  
             deconv_name = "{}_deconv".format(after_name)
             if i == 0:
               net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
@@ -1213,13 +1213,28 @@ def CreateMultiBoxHead_ooxx(net,use_inception=False, use_deconv =False,use_decon
               BN_name2 = "{}_bn2".format(from_layer)
               ConvBNLayer(net, BN_name1, BN_name2, use_bn=True, use_relu=False,use_scale=True, lr_mult=lr_mult,
                 num_output=512, kernel_size=3, pad=pad, stride=1, **bn_param)
+              from_layer = BN_name2
 
             Eltwise_name = "{}_Eltwise".format(from_layers[i])
-            net[Eltwise_name] = L.Eltwise(net[BN_name2],net[deBN_name],eltwise_param={'operation':P.Eltwise.PROD})
+            net[Eltwise_name] = L.Eltwise(net[from_layer],net[deBN_name],eltwise_param={'operation':P.Eltwise.PROD})
             Eltwise_Relu_name = "{}_Relu".format(Eltwise_name)
             net[Eltwise_Relu_name] = L.ReLU(net[Eltwise_name], in_place=True)
             from_layer = Eltwise_Relu_name
-            
+
+        if head_inception:
+          head_inception_name = "{}_head_inception".format(from_layer)
+          if i == 0:
+            InceptionResnetA(net,from_name=from_layer,out_name=head_inception_name,num_output = 512,**inception_kwargs)
+          elif i == 1:
+            InceptionResnetA(net,from_name=from_layer,out_name=head_inception_name,num_output = 512,**inception_kwargs)
+          elif i == 2:
+            InceptionResnetB(net,from_name=from_layer,out_name=head_inception_name,num_output = 512,**inception_kwargs)
+          elif i == 3:
+            InceptionResnetC(net,from_name=from_layer,out_name=head_inception_name,num_output = 512,**inception_kwargs)
+          elif i == 4:
+            InceptionResnetC(net,from_name=from_layer,out_name=head_inception_name,num_output = 512,**inception_kwargs)
+          if i != 5:
+            from_layer = head_inception_name  
 
         # changed by veveve
 
@@ -1230,7 +1245,6 @@ def CreateMultiBoxHead_ooxx(net,use_inception=False, use_deconv =False,use_decon
         if not share_location:
             num_loc_output *= num_classes
 
-        
 
         ConvBNLayer(net, from_layer ,name,use_bn=use_batchnorm,use_relu=False,lr_mult=lr_mult,
           num_output=num_loc_output,kernel_size= kernel_size,pad=pad,stride=1,**bn_param)

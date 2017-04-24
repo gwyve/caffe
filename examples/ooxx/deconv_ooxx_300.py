@@ -39,10 +39,15 @@ def AddExtraLayers(net, use_batchnorm=True):
     
     bn_param["branch1_kernel"] = 3
     bn_param["branch2a_kernel"] = 3
+    #bn_param["branch2b_kernel"] = 2
     out_layer = "8"
     ResBody(net, from_layer, out_layer, out2a=256,out2b=256,out2c=1024,stride=1,use_branch1=True,**bn_param)
     from_layer = "res{}_relu".format(out_layer)
  
+    bn_param["branch1_kernel"] = 2
+    bn_param["branch2a_kernel"] = 1
+    bn_param["branch2b_kernel"] = 2
+    bn_param["branch2b_pad"] = 0
     out_layer = "9"
     ResBody(net, from_layer, out_layer, out2a=256,out2b=256,out2c=1024,stride=1,use_branch1=True,**bn_param)
 
@@ -62,7 +67,6 @@ def AddExtraLayers(net, use_batchnorm=True):
 
     return net
 
-
 ### Modify the following parameters accordingly ###
 # The directory which contains the caffe code.
 # We assume you are running the script at the CAFFE_ROOT.
@@ -81,8 +85,8 @@ train_data = "examples/VOC0712/VOC0712_trainval_lmdb"
 # The database file for testing data. Created by data/VOC0712/create_data.sh
 test_data = "examples/VOC0712/VOC0712_test_lmdb"
 # Specify the batch sampler.
-resize_width = 321
-resize_height = 321
+resize_width = 300
+resize_height = 300
 resize = "{}x{}".format(resize_width, resize_height)
 batch_sampler = [
         {
@@ -285,11 +289,11 @@ loss_param = {
 
 # parameters for generating priors.
 # minimum dimension of input image
-min_dim = 321
-# res3b3_relu ==> 48 x 48
-# res5c_relu ==> 24 x 24
-# res5c_relu/conv1_2 ==> 12 x 12
-# res5c_relu/conv2_2 ==> 6 x 6
+min_dim = 300
+# res3b3_relu ==> 38 x 38
+# res5c_relu ==> 19 x 19
+# res5c_relu/conv1_2 ==> 10 x 10
+# res5c_relu/conv2_2 ==> 5 x 5
 # res5c_relu/conv3_2 ==> 3 x 3
 # pool6 ==> 1 x 1
 mbox_source_layers = ['res3b3_relu', 'res5c_relu', 'res6_relu', 'res7_relu', 'res8_relu', 'res9_relu']

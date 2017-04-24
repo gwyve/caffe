@@ -63,6 +63,12 @@ def AddExtraLayers(net, use_batchnorm=True):
     return net
 
 
+# veveve
+use_deconv = True
+use_deconv_equal = False
+head_inception = True
+use_inception = False
+
 ### Modify the following parameters accordingly ###
 # The directory which contains the caffe code.
 # We assume you are running the script at the CAFFE_ROOT.
@@ -286,10 +292,10 @@ loss_param = {
 # parameters for generating priors.
 # minimum dimension of input image
 min_dim = 321
-# res3b3_relu ==> 38 x 38
-# res5c_relu ==> 19 x 19
-# res5c_relu/conv1_2 ==> 10 x 10
-# res5c_relu/conv2_2 ==> 5 x 5
+# res3b3_relu ==> 48 x 48
+# res5c_relu ==> 24 x 24
+# res5c_relu/conv1_2 ==> 12 x 12
+# res5c_relu/conv2_2 ==> 6 x 6
 # res5c_relu/conv3_2 ==> 3 x 3
 # pool6 ==> 1 x 1
 mbox_source_layers = ['res3b3_relu', 'res5c_relu', 'res6_relu', 'res7_relu', 'res8_relu', 'res9_relu']
@@ -431,8 +437,8 @@ AddExtraLayers(net, use_batchnorm=True)
 
 
 # Don't use batch norm for location/confidence prediction layers.
-mbox_layers = CreateMultiBoxHead_ooxx(net, use_inception = True,use_deconv =True,
-        use_deconv_equal= True,data_layer='data', from_layers=mbox_source_layers,
+mbox_layers = CreateMultiBoxHead_ooxx(net, head_inception = head_inception,use_inception = use_inception,use_deconv =use_deconv,
+        use_deconv_equal= use_deconv_equal,data_layer='data', from_layers=mbox_source_layers,
         use_batchnorm=False, min_sizes=min_sizes, max_sizes=max_sizes,
         aspect_ratios=aspect_ratios,steps=steps, num_classes=num_classes, share_location=share_location,
         flip=flip, clip=clip,offsets=offsets, prior_variance=prior_variance, kernel_size=3, pad=1)
@@ -461,8 +467,8 @@ ResNet101Body(net, from_layer='data', use_pool5=False, use_dilation_conv5=True)
 AddExtraLayers(net, use_batchnorm=True)
 
 # Don't use batch norm for location/confidence prediction layers.
-mbox_layers = CreateMultiBoxHead_ooxx(net, use_inception = True, use_deconv =True,
-        use_deconv_equal= True,data_layer='data', from_layers=mbox_source_layers,
+mbox_layers = CreateMultiBoxHead_ooxx(net, head_inception = head_inception, use_inception = use_inception, use_deconv =use_deconv,
+        use_deconv_equal= use_deconv_equal,data_layer='data', from_layers=mbox_source_layers,
         use_batchnorm=False, min_sizes=min_sizes, max_sizes=max_sizes,
         aspect_ratios=aspect_ratios, num_classes=num_classes, share_location=share_location,
         flip=flip, clip=clip,offsets=offsets, prior_variance=prior_variance, kernel_size=3, pad=1)
