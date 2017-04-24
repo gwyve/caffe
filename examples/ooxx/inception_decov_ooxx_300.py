@@ -441,7 +441,7 @@ AddExtraLayers(net, use_batchnorm=True)
 
 
 # Don't use batch norm for location/confidence prediction layers.
-mbox_layers = CreateMultiBoxHead_ooxx(net, head_inception = head_inception,use_inception = use_inception,use_deconv =use_deconv,
+mbox_layers = CreateMultiBoxHead_ooxx(net,dim=300, head_inception = head_inception,use_inception = use_inception,use_deconv =use_deconv,
         use_deconv_equal= use_deconv_equal,data_layer='data', from_layers=mbox_source_layers,
         use_batchnorm=False, min_sizes=min_sizes, max_sizes=max_sizes,
         aspect_ratios=aspect_ratios,steps=steps, num_classes=num_classes, share_location=share_location,
@@ -471,7 +471,7 @@ ResNet101Body(net, from_layer='data', use_pool5=False, use_dilation_conv5=True)
 AddExtraLayers(net, use_batchnorm=True)
 
 # Don't use batch norm for location/confidence prediction layers.
-mbox_layers = CreateMultiBoxHead_ooxx(net, head_inception = head_inception, use_inception = use_inception, use_deconv =use_deconv,
+mbox_layers = CreateMultiBoxHead_ooxx(net,dim=300, head_inception = head_inception, use_inception = use_inception, use_deconv =use_deconv,
         use_deconv_equal= use_deconv_equal,data_layer='data', from_layers=mbox_source_layers,
         use_batchnorm=False, min_sizes=min_sizes, max_sizes=max_sizes,
         aspect_ratios=aspect_ratios, num_classes=num_classes, share_location=share_location,

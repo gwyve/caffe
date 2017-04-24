@@ -1085,7 +1085,7 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
     return mbox_layers
 
 
-def CreateMultiBoxHead_ooxx(net,head_inception = False, use_inception=False, use_deconv =False,use_deconv_equal = False, 
+def CreateMultiBoxHead_ooxx(net,dim,head_inception = False, use_inception=False, use_deconv =False,use_deconv_equal = False, 
         data_layer="data", num_classes=[], from_layers=[],
         use_objectness=False, normalizations=[], use_batchnorm=True, lr_mult=1,
         use_scale=True, min_sizes=[], max_sizes=[], prior_variance = [0.1],
@@ -1107,6 +1107,12 @@ def CreateMultiBoxHead_ooxx(net,head_inception = False, use_inception=False, use
     assert data_layer in net_layers, "data_layer is not in net's layers"
     if inter_layer_depth:
         assert len(from_layers) == len(inter_layer_depth), "from_layers and inter_layer_depth should have same length"
+
+    # veveve
+    if use_deconv:
+      assert (use_deconv_equal or use_inception), "you must use deconv_equal or inception!!!"
+    if not use_deconv:
+      assert not use_deconv_equal, "you can use_deconv_equal unless use_deconv"
 
     num = len(from_layers)
     priorbox_layers = []
@@ -1183,30 +1189,46 @@ def CreateMultiBoxHead_ooxx(net,head_inception = False, use_inception=False, use
           if i != 5:
             from_layer = inception_name  
 
+
         if use_deconv:
           if i < 5:
             if i == 4:
               after_name = from_layers[i+1]
             else:
               after_name = "{}_Eltwise".format(from_layers[i+1])
-  
-            deconv_name = "{}_deconv".format(after_name)
-            if i == 0:
-              net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
-            if i == 1:
-              net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
-            if i == 2:
-              net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
-            if i == 3:
-              net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
-            if i == 4:
-              net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
             
+            deconv_name = "{}_deconv".format(after_name)
+
+            if dim == 321:
+              if i == 0:
+                net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
+              if i == 1:
+                net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
+              if i == 2:
+                net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
+              if i == 3:
+                net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
+              if i == 4:
+                net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
+            
+            elif dim == 300:
+              if i == 0:
+                net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
+              elif i == 1:
+                net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 2,**inception_kwargs)
+              elif i == 2:
+                net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 2,**inception_kwargs)
+              elif i == 3:
+                net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
+              elif i == 4:
+                net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 1,**inception_kwargs)
+
+
             deBN_name = "{}_BN".format(deconv_name)
             ConvBNLayer(net, deconv_name, deBN_name, use_bn=True, use_relu=False,use_scale=True, lr_mult=lr_mult,
               num_output=512, kernel_size=3, pad=pad, stride=1, **bn_param)
 
-            if use_deconv_equal and use_deconv:
+            if use_deconv_equal:
               BN_name1 = "{}_bn1".format(from_layer)
               ConvBNLayer(net, from_layer, BN_name1, use_bn=True, use_relu=True,use_scale=True, lr_mult=lr_mult,
                 num_output=512, kernel_size=3, pad=pad, stride=1, **bn_param)
@@ -1214,14 +1236,15 @@ def CreateMultiBoxHead_ooxx(net,head_inception = False, use_inception=False, use
               ConvBNLayer(net, BN_name1, BN_name2, use_bn=True, use_relu=False,use_scale=True, lr_mult=lr_mult,
                 num_output=512, kernel_size=3, pad=pad, stride=1, **bn_param)
               from_layer = BN_name2
-            if use_deconv and (use_inception or use_deconv_equal):
-              Eltwise_name = "{}_Eltwise".format(from_layers[i])
-              net[Eltwise_name] = L.Eltwise(net[from_layer],net[deBN_name],eltwise_param={'operation':P.Eltwise.PROD})
-              Eltwise_Relu_name = "{}_Relu".format(Eltwise_name)
-              net[Eltwise_Relu_name] = L.ReLU(net[Eltwise_name], in_place=True)
-              from_layer = Eltwise_Relu_name
-            elif use_deconv:
-              from_layer = deconv_name
+            
+
+            Eltwise_name = "{}_Eltwise".format(from_layers[i])
+            net[Eltwise_name] = L.Eltwise(net[from_layer],net[deBN_name],eltwise_param={'operation':P.Eltwise.PROD})
+            Eltwise_Relu_name = "{}_Relu".format(Eltwise_name)
+            net[Eltwise_Relu_name] = L.ReLU(net[Eltwise_name], in_place=True)
+            from_layer = Eltwise_Relu_name
+
+
 
         if head_inception:
           head_inception_name = "{}_head_inception".format(from_layer)
@@ -1237,6 +1260,8 @@ def CreateMultiBoxHead_ooxx(net,head_inception = False, use_inception=False, use
             InceptionResnetC(net,from_name=from_layer,out_name=head_inception_name,num_output = 512,**inception_kwargs)
           if i != 5:
             from_layer = head_inception_name  
+
+
 
         # changed by veveve
 
@@ -1499,7 +1524,8 @@ def InceptionResnetA(net,from_name,out_name,num_output,**kwargs):
 
     inceptions.append(net[mixed_out_name])
 
-    net[out_name] = L.Eltwise(net[from_name],net[mixed_out_name],eltwise_param={'operation':P.Eltwise.PROD})
+    net[out_name] = L.Concat(*inceptions,axis=1)
+    #net[out_name] = L.Eltwise(net[from_name],net[mixed_out_name],eltwise_param={'operation':P.Eltwise.PROD})
 
 
 
@@ -1533,7 +1559,8 @@ def InceptionResnetB(net,from_name,out_name,num_output,**kwargs):
 
     inceptions.append(net[mixed_out_name])
 
-    net[out_name] = L.Eltwise(net[from_name],net[mixed_out_name],eltwise_param={'operation':P.Eltwise.PROD})
+    net[out_name] = L.Concat(*inceptions,axis=1)
+    #net[out_name] = L.Eltwise(net[from_name],net[mixed_out_name],eltwise_param={'operation':P.Eltwise.PROD})
 
 
 def InceptionResnetC(net,from_name,out_name,num_output,**kwargs):
@@ -1565,4 +1592,5 @@ def InceptionResnetC(net,from_name,out_name,num_output,**kwargs):
 
     inceptions.append(net[mixed_out_name])
 
-    net[out_name] = L.Eltwise(net[from_name],net[mixed_out_name],eltwise_param={'operation':P.Eltwise.PROD})
+    net[out_name] = L.Concat(*inceptions,axis=1)
+    #net[out_name] = L.Eltwise(net[from_name],net[mixed_out_name],eltwise_param={'operation':P.Eltwise.PROD})
