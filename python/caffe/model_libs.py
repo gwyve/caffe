@@ -191,9 +191,11 @@ def ResBody(net, from_layer, block_name, out2a, out2b, out2c, stride, use_branch
   out_name = '{}{}'.format(conv_prefix, branch_name)
 
   branch_name = 'branch2b'
+  branch2b_kernel = bn_param.get("branch2b_kernel",3)
+  branch2b_pad = bn_param.get("branch2b_pad",1)
   if dilation == 1:
     ConvBNLayer(net, out_name, branch_name, use_bn=True, use_relu=True,
-        num_output=out2b, kernel_size=3, pad=1, stride=1, use_scale=use_scale,
+        num_output=out2b, kernel_size=branch2b_kernel, pad=branch2b_pad, stride=1, use_scale=use_scale,
         conv_prefix=conv_prefix, conv_postfix=conv_postfix,
         bn_prefix=bn_prefix, bn_postfix=bn_postfix,
         scale_prefix=scale_prefix, scale_postfix=scale_postfix, **bn_param)
