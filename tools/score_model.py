@@ -14,7 +14,7 @@ def make_if_not_exist(path):
 
 
 def list_dir(path, suffix='.caffemodel'):
-  path = path+"/ResNet/VOC0712/SSD_321x321"
+  path = path+"/ResNet/VOC0712/IDOOXX_321x321"
   l = os.listdir(path)  # 列出目录下的所有文件和目录
   result = []
   for line in l:
@@ -22,10 +22,10 @@ def list_dir(path, suffix='.caffemodel'):
       result.append(os.path.join(path, line))
   return result
 
-caffe_root = "/home/nfs/score/stairsNet/321x321/caffe"
+caffe_root = "/home/nfs/ooxx/caffe"
 model_dir = os.path.join(caffe_root, "models")
-solver_file = "jobs/ResNet/VOC0712/SSD_321x321_score/solver.prototxt"
-job_dir = "jobs/ResNet/VOC0712/SSD_321x321_score"
+solver_file = "jobs/ResNet/VOC0712/IDOOXX_321x321_score/solver.prototxt"
+job_dir = "jobs/ResNet/VOC0712/IDOOXX_321x321_score"
 
 
 def create_score_model_script(model, gpu=True):
