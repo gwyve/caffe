@@ -1215,15 +1215,15 @@ def CreateMultiBoxHead_ooxx(net,dim,head_inception = False, use_inception=False,
             
             elif dim == 300:
               if i == 0:
-                net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
+                net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 2,**inception_kwargs)
               elif i == 1:
-                net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 2,**inception_kwargs)
+                net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 2,**inception_kwargs)
               elif i == 2:
-                net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 2,**inception_kwargs)
+                net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 2,**inception_kwargs)
               elif i == 3:
-                net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
+                net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 3,pad = 0,stride = 1,**inception_kwargs)
               elif i == 4:
-                net[after_deconv] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 1,**inception_kwargs)
+                net[deconv_name] = L.Deconvolution(net[after_name],num_output = 512,kernel_size = 2,pad = 0,stride = 1,**inception_kwargs)
 
 
             deBN_name = "{}_BN".format(deconv_name)
