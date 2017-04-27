@@ -63,12 +63,6 @@ def AddExtraLayers(net, use_batchnorm=True):
     return net
 
 
-# veveve
-use_deconv = True
-use_deconv_equal = True
-head_inception = True
-use_inception = True
-
 ### Modify the following parameters accordingly ###
 # The directory which contains the caffe code.
 # We assume you are running the script at the CAFFE_ROOT.
@@ -76,11 +70,6 @@ caffe_root = os.getcwd()
 
 # Set true if you want to start training right after generating all files.
 run_soon = True
-# Set true if you want to load from most recently saved snapshot.
-# Otherwise, we will load from the pretrain_model defined below.
-resume_training = True
-# If true, Remove old model files.
-remove_old_models = False
 
 # The database file for training data. Created by data/VOC0712/create_data.sh
 train_data = "examples/VOC0712/VOC0712_trainval_lmdb"
@@ -228,18 +217,18 @@ test_transform_param = {
 base_lr = 0.00004
 
 # Modify the job name if you want.
-job_name = "IDOOXX_{}".format(resize)
+job_name = "SSD_{}".format(resize)
 # The name of the model. Modify it if you want.
 model_name = "ResNet_VOC0712_{}".format(job_name)
 
 # Directory which stores the model .prototxt file.
-save_dir = "models/ResNet/VOC0712/{}".format(job_name)
+save_dir = "models/ResNet/VOC0712/{}_score".format(job_name)
 # Directory which stores the snapshot of models.
 snapshot_dir = "models/ResNet/VOC0712/{}".format(job_name)
 # Directory which stores the job script and log file.
-job_dir = "jobs/ResNet/VOC0712/{}".format(job_name)
+job_dir = "jobs/ResNet/VOC0712/{}_score".format(job_name)
 # Directory which stores the detection results.
-output_result_dir = "{}/data/VOCdevkit/results/VOC2007/{}/Main".format(os.environ['HOME'], job_name)
+output_result_dir = "{}/data/VOCdevkit/results/VOC2007/{}_score/Main".format(os.environ['HOME'], job_name)
 
 # model definition files.
 train_net_file = "{}/train.prototxt".format(save_dir)
@@ -251,10 +240,26 @@ snapshot_prefix = "{}/{}".format(snapshot_dir, model_name)
 # job script path.
 job_file = "{}/{}.sh".format(job_dir, model_name)
 
+# Find most recent snapshot.
+max_iter = 0
+for file in os.listdir(snapshot_dir):
+  if file.endswith(".caffemodel"):
+    basename = os.path.splitext(file)[0]
+    iter = int(basename.split("{}_iter_".format(model_name))[1])
+    if iter > max_iter:
+      max_iter = iter
+
+if max_iter == 0:
+  print("Cannot find snapshot in {}".format(snapshot_dir))
+  sys.exit()
+
 # Stores the test image names and sizes. Created by data/VOC0712/create_list.sh
 name_size_file = "data/VOC0712/test_name_size.txt"
 # The pretrained ResNet101 model from https://github.com/KaimingHe/deep-residual-networks.
-pretrain_model = "models/ResNet/ResNet-101-model.caffemodel"
+# pretrain_model = "models/ResNet/ResNet-101-model.caffemodel"
+
+pretrain_model = "{}_iter_{}.caffemodel".format(snapshot_prefix,max_iter)
+
 # Stores LabelMapItem.
 label_map_file = "data/VOC0712/labelmap_voc.prototxt"
 
@@ -291,7 +296,7 @@ loss_param = {
 
 # parameters for generating priors.
 # minimum dimension of input image
-min_dim = 321
+min_dim = 300
 # res3b3_relu ==> 38 x 38
 # res5c_relu ==> 19 x 19
 # res5c_relu/conv1_2 ==> 10 x 10
@@ -309,17 +314,20 @@ for ratio in xrange(min_ratio, max_ratio + 1, step):
   min_sizes.append(min_dim * ratio / 100.)
   max_sizes.append(min_dim * (ratio + step) / 100.)
 min_sizes = [min_dim * 10 / 100.] + min_sizes
-max_sizes = [min_sizes[1]] + max_sizes
+max_sizes = [[]] + max_sizes
 #aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3]]
 aspect_ratios = [[1.6,2,3],[1.6,2,3],[1.6,2,3],[1.6,2,3],[1.6,2,3],[1.6,2,3]]
-# variance used to encode/decode prior bboxes.
-# offsets=[2.5,2.5,10.5,26.5,90.5,160.5]
-# steps=[8,16,32,64,64,321]
 
 offsets=[0.3115264797507788, 0.1557632398753894, 0.32710280373831774, 0.4127725856697819, 0.8457943925233645, 0.5]
 steps=[]
 
 
+
+
+
+
+
+# variance used to encode/decode prior bboxes.
 if code_type == P.PriorBox.CENTER_SIZE:
   prior_variance = [0.1, 0.1, 0.2, 0.2]
 else:
@@ -334,8 +342,8 @@ gpulist = gpus.split(",")
 num_gpus = len(gpulist)
 
 # Divide the mini-batch to different GPUs.
-batch_size = 4
-accum_batch_size = 32
+batch_size = 1
+accum_batch_size = 1
 iter_size = accum_batch_size / batch_size
 solver_mode = P.Solver.CPU
 device_id = 0
@@ -365,25 +373,25 @@ solver_param = {
     'base_lr': base_lr,
     'weight_decay': 0.0005,
     'lr_policy': "multistep",
-    'stepvalue': [30000,50000,70000,90000,110000],
+    'stepvalue': [45000,650000,80000],
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 150000,
-    'snapshot': 5000,
+    'max_iter': 0,
+    'snapshot': 0,
     'display': 10,
     'average_loss': 10,
     'type': "SGD",
     'solver_mode': solver_mode,
     'device_id': device_id,
     'debug_info': False,
-    'snapshot_after_train': True,
+    'snapshot_after_train': False,
     # Test parameters
     'test_iter': [test_iter],
     'test_interval': 50000000,
     'eval_type': "detection",
     'ap_version': "11point",
-    'test_initialization': False,
+    'test_initialization': True,
     }
 
 # parameters for generating detection output.
@@ -435,10 +443,8 @@ ResNet101Body(net, from_layer='data', use_pool5=False, use_dilation_conv5=True)
 # Use batch norm for the newly added layers.
 AddExtraLayers(net, use_batchnorm=True)
 
-
 # Don't use batch norm for location/confidence prediction layers.
-mbox_layers = CreateMultiBoxHead_ooxx(net,dim=321, head_inception = head_inception,use_inception = use_inception,use_deconv =use_deconv,
-        use_deconv_equal= use_deconv_equal,data_layer='data', from_layers=mbox_source_layers,
+mbox_layers = CreateMultiBoxHead(net, data_layer='data', from_layers=mbox_source_layers,
         use_batchnorm=False, min_sizes=min_sizes, max_sizes=max_sizes,
         aspect_ratios=aspect_ratios,steps=steps, num_classes=num_classes, share_location=share_location,
         flip=flip, clip=clip,offsets=offsets, prior_variance=prior_variance, kernel_size=3, pad=1)
@@ -467,10 +473,9 @@ ResNet101Body(net, from_layer='data', use_pool5=False, use_dilation_conv5=True)
 AddExtraLayers(net, use_batchnorm=True)
 
 # Don't use batch norm for location/confidence prediction layers.
-mbox_layers = CreateMultiBoxHead_ooxx(net,dim=321, head_inception = head_inception, use_inception = use_inception, use_deconv =use_deconv,
-        use_deconv_equal= use_deconv_equal,data_layer='data', from_layers=mbox_source_layers,
+mbox_layers = CreateMultiBoxHead(net, data_layer='data', from_layers=mbox_source_layers,
         use_batchnorm=False, min_sizes=min_sizes, max_sizes=max_sizes,
-        aspect_ratios=aspect_ratios, num_classes=num_classes, share_location=share_location,
+        aspect_ratios=aspect_ratios,steps=steps, num_classes=num_classes, share_location=share_location,
         flip=flip, clip=clip,offsets=offsets, prior_variance=prior_variance, kernel_size=3, pad=1)
 
 conf_name = "mbox_conf"
@@ -525,42 +530,15 @@ with open(solver_file, 'w') as f:
     print(solver, file=f)
 shutil.copy(solver_file, job_dir)
 
-max_iter = 0
-# Find most recent snapshot.
-for file in os.listdir(snapshot_dir):
-  if file.endswith(".solverstate"):
-    basename = os.path.splitext(file)[0]
-    iter = int(basename.split("{}_iter_".format(model_name))[1])
-    if iter > max_iter:
-      max_iter = iter
-
-train_src_param = '--weights="{}" \\\n'.format(pretrain_model)
-if resume_training:
-  if max_iter > 0:
-    train_src_param = '--snapshot="{}_iter_{}.solverstate" \\\n'.format(snapshot_prefix, max_iter)
-
-if remove_old_models:
-  # Remove any snapshots smaller than max_iter.
-  for file in os.listdir(snapshot_dir):
-    if file.endswith(".solverstate"):
-      basename = os.path.splitext(file)[0]
-      iter = int(basename.split("{}_iter_".format(model_name))[1])
-      if max_iter > iter:
-        os.remove("{}/{}".format(snapshot_dir, file))
-    if file.endswith(".caffemodel"):
-      basename = os.path.splitext(file)[0]
-      iter = int(basename.split("{}_iter_".format(model_name))[1])
-      if max_iter > iter:
-        os.remove("{}/{}".format(snapshot_dir, file))
 
 # Create job file.
 with open(job_file, 'w') as f:
   f.write('cd {}\n'.format(caffe_root))
   f.write('./build/tools/caffe train \\\n')
   f.write('--solver="{}" \\\n'.format(solver_file))
-  f.write(train_src_param)
+  f.write('--weights="{}" \\\n'.format(pretrain_model))
   if solver_param['solver_mode'] == P.Solver.GPU:
-    f.write('--gpu {} 2>&1 | tee {}/{}.log\n'.format(gpus, job_dir, model_name))
+    f.write('--gpu {} 2>&1 | tee {}/{}_test{}.log\n'.format(gpus, job_dir, model_name,max_iter))
   else:
     f.write('2>&1 | tee {}/{}.log\n'.format(job_dir, model_name))
 
