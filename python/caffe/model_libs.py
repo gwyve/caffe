@@ -1087,7 +1087,7 @@ def CreateMultiBoxHead(net, data_layer="data", num_classes=[], from_layers=[],
     return mbox_layers
 
 
-def CreateMultiBoxHead_ooxx(net,dim,head_inception = False, use_inception=False, use_deconv =False,use_deconv_equal = False, 
+def CreateMultiBoxHead_ooxx(net,dim,head_resblock = False,head_inception = False, use_inception=False, use_deconv =False,use_deconv_equal = False, 
         data_layer="data", num_classes=[], from_layers=[],
         use_objectness=False, normalizations=[], use_batchnorm=True, lr_mult=1,
         use_scale=True, min_sizes=[], max_sizes=[], prior_variance = [0.1],
@@ -1263,6 +1263,10 @@ def CreateMultiBoxHead_ooxx(net,dim,head_inception = False, use_inception=False,
           if i != 5:
             from_layer = head_inception_name  
 
+        if head_resblock:
+          head_resblock_name = "_{}_head_resblock".format(from_layer)
+          ResBody(net,from_layer,head_resblock_name,out2a=256,out2b=256,out2c=1024,stride = 1,use_branch1=True,**bn_param)
+          from_layer = "res{}_relu".format(head_resblock_name)
 
 
         # changed by veveve
