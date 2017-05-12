@@ -64,8 +64,8 @@ def AddExtraLayers(net, use_batchnorm=True):
 
 
 # veveve
-use_deconv = False
-use_deconv_equal = False
+use_deconv = True
+use_deconv_equal = True
 head_inception = False
 use_inception = False
 head_resblock = True

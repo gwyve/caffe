@@ -64,10 +64,10 @@ def AddExtraLayers(net, use_batchnorm=True):
 
 
 # veveve
+# incetion : 1 for incetion-style; 2 for resBlock-style
 use_deconv = True
-use_deconv_equal = True
-head_inception = True
-use_inception = True
+inception_down = 1
+inception_top = 2
 
 ### Modify the following parameters accordingly ###
 # The directory which contains the caffe code.
@@ -254,7 +254,7 @@ job_file = "{}/{}.sh".format(job_dir, model_name)
 # Stores the test image names and sizes. Created by data/VOC0712/create_list.sh
 name_size_file = "data/VOC0712/test_name_size.txt"
 # The pretrained ResNet101 model from https://github.com/KaimingHe/deep-residual-networks.
-pretrain_model = "models/ResNet/ResNet-101-model.caffemodel"
+pretrain_model = "models/ResNet/VOC0712/OOXX_321x321/ResNet_VOC0712_OOXX_321x321_iter_80000.caffemodel"
 # Stores LabelMapItem.
 label_map_file = "data/VOC0712/labelmap_voc.prototxt"
 
@@ -365,7 +365,7 @@ solver_param = {
     'base_lr': base_lr,
     'weight_decay': 0.0005,
     'lr_policy': "multistep",
-    'stepvalue': [30000,50000,70000,90000,110000],
+    'stepvalue': [60000,90000,110000],
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
@@ -380,7 +380,7 @@ solver_param = {
     'snapshot_after_train': True,
     # Test parameters
     'test_iter': [test_iter],
-    'test_interval': 50000000,
+    'test_interval': 5000,
     'eval_type': "detection",
     'ap_version': "11point",
     'test_initialization': False,
@@ -437,8 +437,8 @@ AddExtraLayers(net, use_batchnorm=True)
 
 
 # Don't use batch norm for location/confidence prediction layers.
-mbox_layers = CreateMultiBoxHead_ooxx(net,dim=321, head_inception = head_inception,use_inception = use_inception,use_deconv =use_deconv,
-        use_deconv_equal= use_deconv_equal,data_layer='data', from_layers=mbox_source_layers,
+mbox_layers = CreateMultiBoxHead_ooxx(net,dim =min_dim, inception_top = inception_top,inception_down = inception_down,
+        use_deconv = use_deconv,data_layer='data', from_layers=mbox_source_layers,
         use_batchnorm=False, min_sizes=min_sizes, max_sizes=max_sizes,
         aspect_ratios=aspect_ratios,steps=steps, num_classes=num_classes, share_location=share_location,
         flip=flip, clip=clip,offsets=offsets, prior_variance=prior_variance, kernel_size=3, pad=1)
@@ -467,8 +467,8 @@ ResNet101Body(net, from_layer='data', use_pool5=False, use_dilation_conv5=True)
 AddExtraLayers(net, use_batchnorm=True)
 
 # Don't use batch norm for location/confidence prediction layers.
-mbox_layers = CreateMultiBoxHead_ooxx(net,dim=321, head_inception = head_inception, use_inception = use_inception, use_deconv =use_deconv,
-        use_deconv_equal= use_deconv_equal,data_layer='data', from_layers=mbox_source_layers,
+mbox_layers = CreateMultiBoxHead_ooxx(net, dim =min_dim, inception_top = inception_top,inception_down = inception_down,
+        use_deconv = use_deconv, data_layer='data', from_layers=mbox_source_layers,
         use_batchnorm=False, min_sizes=min_sizes, max_sizes=max_sizes,
         aspect_ratios=aspect_ratios, num_classes=num_classes, share_location=share_location,
         flip=flip, clip=clip,offsets=offsets, prior_variance=prior_variance, kernel_size=3, pad=1)

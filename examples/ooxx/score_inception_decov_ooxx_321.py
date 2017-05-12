@@ -64,23 +64,22 @@ def AddExtraLayers(net, use_batchnorm=True):
 
 
 # veveve
+# incetion : 1 for incetion-style; 2 for resBlock-style
 use_deconv = True
-use_deconv_equal = True
-head_inception = True
-use_inception = True
+inception_down = 0
+inception_top = 0
 
 ### Modify the following parameters accordingly ###
+# Notice: we do evaluation by setting the solver parameters approximately.
+# The reason that we do not use ./build/tools/caffe test ... is because it
+# only supports testing for classification problem now.
 # The directory which contains the caffe code.
 # We assume you are running the script at the CAFFE_ROOT.
 caffe_root = os.getcwd()
 
 # Set true if you want to start training right after generating all files.
 run_soon = True
-# Set true if you want to load from most recently saved snapshot.
-# Otherwise, we will load from the pretrain_model defined below.
-resume_training = True
-# If true, Remove old model files.
-remove_old_models = False
+
 
 # The database file for training data. Created by data/VOC0712/create_data.sh
 train_data = "examples/VOC0712/VOC0712_trainval_lmdb"
@@ -228,7 +227,7 @@ test_transform_param = {
 base_lr = 0.00004
 
 # Modify the job name if you want.
-job_name = "IDOOXX_{}".format(resize)
+job_name = "IDOOXX_{}_score".format(resize)
 # The name of the model. Modify it if you want.
 model_name = "ResNet_VOC0712_{}".format(job_name)
 
@@ -251,9 +250,6 @@ snapshot_prefix = "{}/{}".format(snapshot_dir, model_name)
 # job script path.
 job_file = "{}/{}.sh".format(job_dir, model_name)
 
-# Stores the test image names and sizes. Created by data/VOC0712/create_list.sh
-name_size_file = "data/VOC0712/test_name_size.txt"
-
 # Find most recent snapshot.
 max_iter = 0
 for file in os.listdir(snapshot_dir):
@@ -267,11 +263,10 @@ if max_iter == 0:
   print("Cannot find snapshot in {}".format(snapshot_dir))
   sys.exit()
 
-
+# Stores the test image names and sizes. Created by data/VOC0712/create_list.sh
+name_size_file = "data/VOC0712/test_name_size.txt"
 # The resume model.
 pretrain_model = "{}_iter_{}.caffemodel".format(snapshot_prefix, max_iter)
-
-
 # Stores LabelMapItem.
 label_map_file = "data/VOC0712/labelmap_voc.prototxt"
 
@@ -382,7 +377,7 @@ solver_param = {
     'base_lr': base_lr,
     'weight_decay': 0.0005,
     'lr_policy': "multistep",
-    'stepvalue': [30000,50000,70000,90000,110000],
+    'stepvalue': [60000,90000,110000],
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
@@ -397,7 +392,7 @@ solver_param = {
     'snapshot_after_train': False,
     # Test parameters
     'test_iter': [test_iter],
-    'test_interval': 50000000,
+    'test_interval': 5000,
     'eval_type': "detection",
     'ap_version': "11point",
     'test_initialization': True,
@@ -454,8 +449,8 @@ AddExtraLayers(net, use_batchnorm=True)
 
 
 # Don't use batch norm for location/confidence prediction layers.
-mbox_layers = CreateMultiBoxHead_ooxx(net,dim=321, head_inception = head_inception,use_inception = use_inception,use_deconv =use_deconv,
-        use_deconv_equal= use_deconv_equal,data_layer='data', from_layers=mbox_source_layers,
+mbox_layers = CreateMultiBoxHead_ooxx(net,dim =min_dim, inception_top = inception_top,inception_down = inception_down,
+        use_deconv = use_deconv,data_layer='data', from_layers=mbox_source_layers,
         use_batchnorm=False, min_sizes=min_sizes, max_sizes=max_sizes,
         aspect_ratios=aspect_ratios,steps=steps, num_classes=num_classes, share_location=share_location,
         flip=flip, clip=clip,offsets=offsets, prior_variance=prior_variance, kernel_size=3, pad=1)
@@ -484,8 +479,8 @@ ResNet101Body(net, from_layer='data', use_pool5=False, use_dilation_conv5=True)
 AddExtraLayers(net, use_batchnorm=True)
 
 # Don't use batch norm for location/confidence prediction layers.
-mbox_layers = CreateMultiBoxHead_ooxx(net,dim=321, head_inception = head_inception, use_inception = use_inception, use_deconv =use_deconv,
-        use_deconv_equal= use_deconv_equal,data_layer='data', from_layers=mbox_source_layers,
+mbox_layers = CreateMultiBoxHead_ooxx(net, dim =min_dim, inception_top = inception_top,inception_down = inception_down,
+        use_deconv = use_deconv, data_layer='data', from_layers=mbox_source_layers,
         use_batchnorm=False, min_sizes=min_sizes, max_sizes=max_sizes,
         aspect_ratios=aspect_ratios, num_classes=num_classes, share_location=share_location,
         flip=flip, clip=clip,offsets=offsets, prior_variance=prior_variance, kernel_size=3, pad=1)
@@ -541,8 +536,6 @@ solver = caffe_pb2.SolverParameter(
 with open(solver_file, 'w') as f:
     print(solver, file=f)
 shutil.copy(solver_file, job_dir)
-
-
 
 # Create job file.
 with open(job_file, 'w') as f:
