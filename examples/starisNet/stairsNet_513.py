@@ -403,7 +403,7 @@ net.data, net.label = CreateAnnotatedDataLayer(train_data, batch_size=batch_size
         train=True, output_label=True, label_map_file=label_map_file,
         transform_param=train_transform_param, batch_sampler=batch_sampler)
 
-ResNet101Body(net, from_layer='data', use_pool5=False, use_dilation_conv5=True,frosen=True)
+ResNet101Body(net, from_layer='data', use_pool5=False, use_dilation_conv5=True,frosen=False)
 
 # Use batch norm for the newly added layers.
 AddExtraLayers(net, use_batchnorm=True)
@@ -434,7 +434,7 @@ net.data, net.label = CreateAnnotatedDataLayer(test_data, batch_size=test_batch_
         train=False, output_label=True, label_map_file=label_map_file,
         transform_param=test_transform_param)
 
-ResNet101Body(net, from_layer='data', use_pool5=False, use_dilation_conv5=True,frosen=True)
+ResNet101Body(net, from_layer='data', use_pool5=False, use_dilation_conv5=True,frosen=False)
 
 # Use batch norm for the newly added layers.
 AddExtraLayers(net, use_batchnorm=True)
