@@ -33,6 +33,7 @@ def ConvBNLayer(net, from_layer, out_layer, use_bn, use_relu, num_output,
     scale_prefix='', scale_postfix='_scale', bias_prefix='', bias_postfix='_bias',
     **bn_params):
 
+  need_learn=True
   if use_bn:
     # parameters for convolution layer with batchnorm.
     kwargs = {
@@ -105,7 +106,8 @@ def ConvBNLayer(net, from_layer, out_layer, use_bn, use_relu, num_output,
   [kernel_h, kernel_w] = UnpackVariable(kernel_size, 2)
   [pad_h, pad_w] = UnpackVariable(pad, 2)
   [stride_h, stride_w] = UnpackVariable(stride, 2)
-
+ 
+  
   if need_learn:
     if kernel_h == kernel_w:
       net[conv_name] = L.Convolution(net[from_layer], num_output=num_output,

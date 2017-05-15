@@ -157,11 +157,14 @@ class Function(object):
             if k.endswith('param'):
                 assign_proto(layer, k, v)
             else:
-                try:
-                    assign_proto(getattr(layer,
-                        _param_names[self.type_name] + '_param'), k, v)
-                except (AttributeError, KeyError):
-                    assign_proto(layer, k, v)
+		if layer.type == "Deconvolution":
+			assign_proto(getattr(layer, _param_names["Convolution"]+'_param'), k,  v)
+		else:
+			try:
+                    		assign_proto(getattr(layer,
+                        		_param_names[self.type_name] + '_param'), k, v)
+                	except (AttributeError, KeyError):
+                    		assign_proto(layer, k, v)
 
         layers[self] = layer
 
